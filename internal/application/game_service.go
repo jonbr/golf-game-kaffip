@@ -1,0 +1,306 @@
+package application
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"golf-game-kaffip/internal/api/dto"
+	domainCourse "golf-game-kaffip/internal/domain/course"
+	"golf-game-kaffip/internal/domain/game"
+	domainGame "golf-game-kaffip/internal/domain/game"
+	"golf-game-kaffip/internal/domain/player"
+	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
+	"golf-game-kaffip/internal/logging"
+	"log/slog"
+	"time"
+)
+
+type GameService struct {
+	games                 game.Repository
+	players               player.Repository
+	externalCourseService *ExternalCourseService
+}
+
+func NewGameService(
+	games game.Repository,
+	players player.Repository,
+	externalAPI opengolfapi.ClientInterface,
+) *GameService {
+	return &GameService{
+		games:                 games,
+		players:               players,
+		externalCourseService: NewExternalCourseService(externalAPI),
+	}
+}
+
+func (s *GameService) CreateGame(ctx context.Context, req dto.CreateGameRequest) (*domainGame.Game, error) {
+	logger := logging.FromCtx(ctx)
+	playersIDs := append(req.TeamA, req.TeamB...)
+
+	if err := s.validatePlayersExist(ctx, logger, playersIDs); err != nil {
+		return nil, err
+	}
+	if err := s.validateActiveGameConflict(ctx, playersIDs); err != nil {
+		return nil, err
+	}
+
+	teamAPlayers, err := s.loadPlayers(ctx, req.TeamA)
+	if err != nil {
+		return nil, err
+	}
+	teamBPlayers, err := s.loadPlayers(ctx, req.TeamB)
+	if err != nil {
+		return nil, err
+	}
+
+	course, err := s.fetchCourse(ctx, logger, req.CourseID)
+	if err != nil {
+		return nil, err
+	}
+
+	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
+
+	// 5. Create domain game
+	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.Variant(req.Variant))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create game: %w", err)
+	}
+
+	// 4. Persist
+	if err := s.games.CreateGame(ctx, g); err != nil {
+		return nil, fmt.Errorf("failed to save game: %w", err)
+	}
+
+	return g, nil
+}
+
+// TODO(backlog): GetGames currently calls the external course API once per
+// game row (N+1, and one bad course_id fails the entire list — see logs
+// 2026-07-11). Snapshot course_name (+ maybe location) into the games table
+// at CreateGame time so this becomes a pure DB read. Keep external
+// enrichment (holes, par, yardage) in GetGame only.
+func (s *GameService) GetGames(ctx context.Context, status string) ([]*domainGame.Game, error) {
+	logger := logging.FromCtx(ctx)
+
+	opts := domainGame.ListOptions{}
+	switch status {
+	case "", "all":
+	case "active":
+		opts.ActiveOnly = true
+	case "finished":
+		opts.FinishedOnly = true
+	default:
+		return nil, NewServiceError("invalid_status_filter", map[string]any{"status": status})
+	}
+
+	rows, err := s.games.ListSummaries(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve games: %w", err)
+	}
+
+	games := make([]*domainGame.Game, 0, len(rows))
+	for _, row := range rows {
+		course, err := s.fetchCourse(ctx, logger, row.CourseID)
+		if err != nil {
+			return nil, err
+		}
+
+		teamA, teamB, err := s.players.GetTeamsForGame(ctx, row.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load teams for game %s: %w", row.ID, err)
+		}
+
+		games = append(games, &domainGame.Game{
+			ID:          row.ID,
+			Course:      course,
+			TeamA:       teamA,
+			TeamB:       teamB,
+			CurrentHole: row.CurrentHole,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+			FinishedAt:  row.FinishedAt,
+			MatchScore: domainGame.MatchScore{
+				TeamA: row.MatchScore.TeamA,
+				TeamB: row.MatchScore.TeamB,
+			},
+			HoleResults: make(map[int]*domainGame.HoleResult),
+		})
+	}
+
+	return games, nil
+}
+
+func (s *GameService) GetGame(ctx context.Context, id string) (*domainGame.Game, error) {
+	logger := logging.FromCtx(ctx)
+
+	row, err := s.games.LoadGame(ctx, id)
+	if err != nil {
+		return nil, NewServiceError("game_not_found", map[string]any{"game_id": id})
+	}
+
+	course, err := s.fetchCourse(ctx, logger, row.Course.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	teamA, teamB, err := s.players.GetTeamsForGame(ctx, row.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domainGame.Game{
+		ID:          row.ID,
+		Course:      course,
+		TeamA:       teamA,
+		TeamB:       teamB,
+		CurrentHole: row.CurrentHole,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+		FinishedAt:  row.FinishedAt,
+		MatchScore: domainGame.MatchScore{
+			TeamA: row.MatchScore.TeamA,
+			TeamB: row.MatchScore.TeamB,
+		},
+		HoleResults: make(map[int]*domainGame.HoleResult),
+	}, nil
+}
+
+func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
+	logger := logging.FromCtx(ctx)
+
+	g, err := s.games.LoadGame(ctx, gameID)
+	if err != nil {
+		return nil, NewServiceError("game_not_found", map[string]any{"game_id": gameID})
+	}
+
+	inputs, err := buildScoreInputs(g, scores)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := g.SetHoleScore(holeNumber, inputs); err != nil {
+		logger.Error("failed to set hole score", "game_id", gameID, "hole_number", holeNumber, "error", err)
+		return nil, NewServiceError("invalid_hole_score", map[string]any{
+			"game_id":     gameID,
+			"hole_number": holeNumber,
+			"underlying":  err.Error(),
+		})
+	}
+
+	if err := s.games.SaveHoleResult(ctx, g, holeNumber); err != nil {
+		return nil, fmt.Errorf("failed to persist hole %d result: %w", holeNumber, err)
+	}
+
+	return g, nil
+}
+
+func (s *GameService) FinishGame(ctx context.Context, gameID string) error {
+	g, err := s.GetGame(ctx, gameID)
+	if err != nil {
+		return err
+	}
+
+	if g.FinishedAt != nil {
+		return NewServiceError("game_already_finished", map[string]any{"game_id": gameID})
+	}
+
+	return s.games.FinishGame(ctx, gameID)
+}
+
+// buildScoreInputs validates that scores are provided for exactly the
+// game's 4 registered players (2 per team) and tags each with its TeamID.
+func buildScoreInputs(g *domainGame.Game, scores []dto.PlayerGrossScore) ([]domainGame.PlayerScoreInput, error) {
+	if len(scores) != 4 {
+		return nil, NewServiceError("invalid_score_count", map[string]any{
+			"expected": 4,
+			"got":      len(scores),
+		})
+	}
+
+	teamOf := make(map[int64]string, 4)
+	for _, p := range g.TeamA {
+		teamOf[p.ID] = "A"
+	}
+	for _, p := range g.TeamB {
+		teamOf[p.ID] = "B"
+	}
+
+	inputs := make([]domainGame.PlayerScoreInput, 0, 4)
+	seen := make(map[int64]bool, 4)
+
+	for _, s := range scores {
+		team, ok := teamOf[s.PlayerID]
+		if !ok {
+			return nil, NewServiceError("player_not_in_game", map[string]any{
+				"player_id": s.PlayerID,
+				"game_id":   g.ID,
+			})
+		}
+		if seen[s.PlayerID] {
+			return nil, NewServiceError("duplicate_player_score", map[string]any{
+				"player_id": s.PlayerID,
+			})
+		}
+		seen[s.PlayerID] = true
+
+		inputs = append(inputs, domainGame.PlayerScoreInput{
+			PlayerID: s.PlayerID,
+			Gross:    s.Gross,
+			TeamID:   team,
+		})
+	}
+
+	return inputs, nil
+}
+
+func (s *GameService) loadPlayers(ctx context.Context, ids []int64) ([]*player.Player, error) {
+	players := make([]*player.Player, 0, len(ids))
+	for _, id := range ids {
+		p, err := s.players.FindByID(ctx, id, false)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load player with ID %d: %w", id, err)
+		}
+		players = append(players, p)
+	}
+
+	return players, nil
+}
+
+func (s *GameService) validatePlayersExist(ctx context.Context, logger *slog.Logger, playerIDs []int64) error {
+	for _, pid := range playerIDs {
+		exists, err := s.games.PlayerExists(ctx, pid)
+		if err != nil {
+			return NewServiceError("internal_error", map[string]any{"underlying": err.Error()})
+		}
+		if !exists {
+			logger.Error("player existence validation failed", "player_id", pid)
+			return NewServiceError("player_not_found", map[string]any{"player_id": pid})
+		}
+	}
+	return nil
+}
+
+func (s *GameService) validateActiveGameConflict(ctx context.Context, playerIDs []int64) error {
+	blockingPlayer, err := s.games.PlayersInActiveGame(ctx, playerIDs)
+	if err != nil {
+		return NewServiceError("internal_error", map[string]any{"underlying": err.Error()})
+	}
+	if blockingPlayer != 0 {
+		return NewServiceError("player_in_active_game", map[string]any{"player_id": blockingPlayer})
+	}
+	return nil
+}
+
+// fetchCourse centralizes external course lookup + error mapping,
+// used by GetGames, GetGame, and CreateGame.
+func (s *GameService) fetchCourse(ctx context.Context, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
+	course, err := s.externalCourseService.GetExternalCourse(ctx, courseID)
+	if err != nil {
+		logger.Info("external course lookup failed", "course_id", courseID, "error", err.Error())
+		if errors.Is(err, domainCourse.ErrCourseNotFound) {
+			return nil, domainCourse.ErrCourseNotFound
+		}
+		return nil, NewServiceError("external_api_error", map[string]any{"underlying": err.Error()})
+	}
+	return course, nil
+}

@@ -1,0 +1,14 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor local history (VS Code extension snapshots)
+.history/
+
+# macOS
+.DS_Store
+
+# Build artifacts
+/tmp
+*.log

@@ -1,0 +1,121 @@
+@baseUrl = http://localhost:8080
+
+### ---------------------------------------
+### Health Check
+### ---------------------------------------
+GET {{baseUrl}}/health
+
+
+### ---------------------------------------
+### Init Game
+### ---------------------------------------
+POST {{baseUrl}}/games
+Content-Type: application/json
+
+{
+  "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+  "team_a": [1, 2],
+  "team_b": [3, 4],
+  "variant": "gross"
+}
+
+
+### ---------------------------------------
+### Submit Hole Score
+### ---------------------------------------
+PUT  {{baseUrl}}/games/game_1784036476579441000/holes/2/score
+Content-Type: application/json
+
+{
+  "scores": [
+    { "player_id": 1, "gross": 5 },
+    { "player_id": 2, "gross": 4 },
+    { "player_id": 3, "gross": 5 },
+    { "player_id": 4, "gross": 4 }
+  ]
+}
+
+
+### ---------------------------------------
+### Previous Hole Score
+### ---------------------------------------
+POST {{baseUrl}}/game/game_1780440841900363000/hole/previous
+Content-Type: application/json
+
+
+### ---------------------------------------
+### Next Hole Score
+### ---------------------------------------
+POST {{baseUrl}}/game/game_1780440616913647000/hole/next
+Content-Type: application/json
+
+
+### ---------------------------------------
+### Get Games
+### ---------------------------------------
+GET {{baseUrl}}/games?status=finished
+
+
+### ---------------------------------------
+### Get Game
+### ---------------------------------------
+GET {{baseUrl}}/games/game_1783519378063754000
+
+
+### ---------------------------------------
+### Finish Game
+### ---------------------------------------
+POST {{baseUrl}}/games/game_1784029805139758000/finish
+
+
+### ---------------------------------------
+### (Optional) Reset Game
+### ---------------------------------------
+POST {{baseUrl}}/game/reset
+Content-Type: application/json
+
+{
+  "game_id": "game_123456789"
+}
+
+
+### ---------------------------------------
+### Creaete Player
+### ---------------------------------------
+POST {{baseUrl}}/players
+Content-Type: application/json  
+  
+{
+  "name": "Player-new-4",
+  "handicap": 40.1
+}
+
+
+### ---------------------------------------
+### Get All Players
+### ---------------------------------------
+GET {{baseUrl}}/players
+
+
+### ---------------------------------------
+### Get Player By ID
+### ---------------------------------------
+GET {{baseUrl}}/players/5
+
+
+### ---------------------------------------
+### Update Player
+### ---------------------------------------
+PUT {{baseUrl}}/players/1
+Content-Type: application/json  
+  
+{
+  "name": "Player-1-modified",
+  "handicap": 4.4
+}
+
+
+### ---------------------------------------
+### Delete Player (soft)
+### ---------------------------------------
+DELETE {{baseUrl}}/players/1
