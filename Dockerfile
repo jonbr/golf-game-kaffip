@@ -1,5 +1,8 @@
 # --- Stage 1: Build the Go binary ---
-FROM golang:1.26 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -8,17 +11,18 @@ RUN go mod download
 
 COPY . .
 
-# Build for Linux ARM64 (your Mac is arm64)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o server ./cmd/api
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o server ./cmd/api
 
-# --- Stage 2: Runtime (Debian instead of Alpine) ---
+# --- Stage 2: Runtime ---
 FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY --from=builder /app/server .
-
-#RUN chmod +x /app/server
+COPY --from=builder /app/internal/infrastructure/postgres/migrations ./internal/infrastructure/postgres/migrations
 
 EXPOSE 8080
 
