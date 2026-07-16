@@ -32,6 +32,9 @@ var serviceErrorStatus = map[string]int{
 	"wrong_hole":                    http.StatusConflict,
 	"game_finished":                 http.StatusConflict,
 	"validation_error":              http.StatusBadRequest,
+	"invalid_team_size":             http.StatusBadRequest,
+	"invalid_game_type":             http.StatusBadRequest,
+	"invalid_game_params":           http.StatusBadRequest,
 }
 
 func StatusCode(err error) int {

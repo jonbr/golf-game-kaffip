@@ -22,8 +22,15 @@ func (g *Game) SetHoleScore(holeNumber int, scores []PlayerScoreInput) error {
 	}
 
 	players := g.playersByID()
+	totalHoles := len(g.Course.HolesData)
 
-	result, err := calculateHoleResult(hole, scores, g.Variant, players, len(g.Course.HolesData))
+	var result *HoleResult
+	switch g.GameType {
+	case GameTypeMatchPlay:
+		result, err = calculateMatchPlayHoleResult(hole, scores, g.Variant, players, totalHoles)
+	default:
+		result, err = calculateHoleResult(hole, scores, g.Variant, players, totalHoles)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to calculate hole %d result: %w", holeNumber, err)
 	}
@@ -31,7 +38,7 @@ func (g *Game) SetHoleScore(holeNumber int, scores []PlayerScoreInput) error {
 	g.HoleResults[holeNumber] = result
 	g.recomputeMatchScore()
 
-	if holeNumber == g.CurrentHole && g.CurrentHole < len(g.Course.HolesData) {
+	if holeNumber == g.CurrentHole && g.CurrentHole < totalHoles {
 		g.CurrentHole++
 	}
 

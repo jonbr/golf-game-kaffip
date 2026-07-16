@@ -6,15 +6,23 @@ import (
 	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
+	domainGame "golf-game-kaffip/internal/domain/game"
+
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "create game")
+
+	gameType := domainGame.GameTypeTeamPlay
+	if strings.HasSuffix(r.URL.Path, "/match_play") {
+		gameType = domainGame.GameTypeMatchPlay
+	}
 
 	// 1. Bind JSON
 	var req dto.CreateGameRequest
@@ -25,7 +33,7 @@ func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Execute service
-	game, err := h.GameService.CreateGame(ctx, req)
+	game, err := h.GameService.CreateGame(ctx, gameType, req)
 	if err != nil {
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
 			logger.Info("create game failed: course not found", "course_id", req.CourseID)

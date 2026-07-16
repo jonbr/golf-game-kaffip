@@ -57,6 +57,7 @@ func MapGameRowToDomain(row *GameRow, holes []CourseHoleRow, results []HoleResul
 	return &domainGame.Game{
 		ID:           row.ID,
 		Course:       course,
+		GameType:     domainGame.GameType(row.GameType),
 		Variant:      domainGame.Variant(row.Variant),
 		StartingLead: row.StartingLead,
 		CurrentHole:  row.CurrentHole,
@@ -71,18 +72,12 @@ func MapGameRowToDomain(row *GameRow, holes []CourseHoleRow, results []HoleResul
 	}
 }
 
-func derefOrEmpty(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
 func MapGameSummaryRowToDomain(row *GameSummaryRow) *domainGame.GameSummary {
 	return &domainGame.GameSummary{
 		ID:          row.ID,
 		CourseID:    row.CourseID,
 		CourseName:  row.CourseName,
+		GameType:    domainGame.GameType(row.GameType),
 		Variant:     domainGame.Variant(row.Variant),
 		CurrentHole: row.CurrentHole,
 		TotalHoles:  row.TotalHoles,
@@ -94,4 +89,11 @@ func MapGameSummaryRowToDomain(row *GameSummaryRow) *domainGame.GameSummary {
 		UpdatedAt:  row.UpdatedAt,
 		FinishedAt: row.FinishedAt,
 	}
+}
+
+func derefOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

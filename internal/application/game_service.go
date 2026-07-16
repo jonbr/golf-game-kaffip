@@ -33,8 +33,13 @@ func NewGameService(
 	}
 }
 
-func (s *GameService) CreateGame(ctx context.Context, req dto.CreateGameRequest) (*domainGame.Game, error) {
+func (s *GameService) CreateGame(ctx context.Context, gameType domainGame.GameType, req dto.CreateGameRequest) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
+
+	if err := validateTeamSize(gameType, req.TeamA, req.TeamB); err != nil {
+		return nil, err
+	}
+
 	playersIDs := append(req.TeamA, req.TeamB...)
 
 	if err := s.validatePlayersExist(ctx, logger, playersIDs); err != nil {
@@ -61,9 +66,9 @@ func (s *GameService) CreateGame(ctx context.Context, req dto.CreateGameRequest)
 	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
 
 	// 5. Create domain game
-	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.GameType(gameType), domainGame.Variant(req.Variant))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create game: %w", err)
+		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}
 
 	// 4. Persist
@@ -303,4 +308,26 @@ func (s *GameService) fetchCourse(ctx context.Context, logger *slog.Logger, cour
 		return nil, NewServiceError("external_api_error", map[string]any{"underlying": err.Error()})
 	}
 	return course, nil
+}
+
+func validateTeamSize(gameType domainGame.GameType, teamA, teamB []int64) error {
+	var want int
+	switch gameType {
+	case domainGame.GameTypeTeamPlay:
+		want = 2
+	case domainGame.GameTypeMatchPlay:
+		want = 1
+	default:
+		return NewServiceError("invalid_game_type", map[string]any{"game_type": gameType})
+	}
+
+	if len(teamA) != want || len(teamB) != want {
+		return NewServiceError("invalid_team_size", map[string]any{
+			"game_type":         gameType,
+			"expected_per_side": want,
+			"team_a_size":       len(teamA),
+			"team_b_size":       len(teamB),
+		})
+	}
+	return nil
 }

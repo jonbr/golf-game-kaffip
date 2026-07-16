@@ -45,7 +45,7 @@ func TestGameRepository_CreateGameAndLoadGame(t *testing.T) {
 		},
 	}
 
-	g, err := domainGame.NewGame("test-game-id", course, teamA, teamB, domainGame.VariantGross)
+	g, err := domainGame.NewGame("test-game-id", course, teamA, teamB, domainGame.GameTypeMatchPlay, domainGame.VariantGross)
 	if err != nil {
 		t.Fatalf("NewGame failed: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestGameRepository_SaveHoleResultAndReload(t *testing.T) {
 		},
 	}
 
-	g, err := domainGame.NewGame("test-game-hole-result", course, teamA, teamB, domainGame.VariantGross)
+	g, err := domainGame.NewGame("test-game-hole-result", course, teamA, teamB, domainGame.GameTypeTeamPlay, domainGame.VariantGross)
 	if err != nil {
 		t.Fatalf("NewGame failed: %v", err)
 	}

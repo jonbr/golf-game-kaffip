@@ -25,7 +25,7 @@ func NewRepository(db *pgxpool.Pool, playerRepo player.Repository) domainGame.Re
 
 func (r *GameRepository) ListSummaries(ctx context.Context, opts domainGame.ListOptions) ([]*domainGame.GameSummary, error) {
 	query := `
-        SELECT g.id, g.course_id, g.course_name, g.variant, g.current_hole,
+        SELECT g.id, g.course_id, g.course_name, g.game_type, g.variant, g.current_hole,
                COUNT(gch.hole_number) AS total_holes,
                g.match_team_a, g.match_team_b,
                g.created_at, g.updated_at, g.finished_at
@@ -52,7 +52,7 @@ func (r *GameRepository) ListSummaries(ctx context.Context, opts domainGame.List
 	for rows.Next() {
 		var row GameSummaryRow
 		if err := rows.Scan(
-			&row.ID, &row.CourseID, &row.CourseName, &row.Variant, &row.CurrentHole,
+			&row.ID, &row.CourseID, &row.CourseName, &row.GameType, &row.Variant, &row.CurrentHole,
 			&row.TotalHoles, &row.MatchTeamA, &row.MatchTeamB,
 			&row.CreatedAt, &row.UpdatedAt, &row.FinishedAt,
 		); err != nil {
@@ -127,11 +127,11 @@ func (r *GameRepository) CreateGame(ctx context.Context, g *domainGame.Game) err
 
 	if res.RowsAffected() == 0 {
 		_, err = tx.Exec(ctx, `
-            INSERT INTO games (id, course_id, course_name, variant, starting_lead,
+            INSERT INTO games (id, course_id, course_name, game_type, variant, starting_lead,
                                 current_hole, match_team_a, match_team_b, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
         `,
-			g.ID, g.Course.ID, g.Course.Name, string(g.Variant), g.StartingLead,
+			g.ID, g.Course.ID, g.Course.Name, string(g.GameType), string(g.Variant), g.StartingLead,
 			g.CurrentHole, g.MatchScore.TeamA, g.MatchScore.TeamB,
 		)
 		if err != nil {
@@ -275,12 +275,12 @@ func (r *GameRepository) PlayerExists(ctx context.Context, id int64) (bool, erro
 func (r *GameRepository) findGameRow(ctx context.Context, id string) (*GameRow, error) {
 	var row GameRow
 	err := r.db.QueryRow(ctx, `
-        SELECT id, course_id, course_name, variant, starting_lead, current_hole,
+        SELECT id, course_id, course_name, game_type, variant, starting_lead, current_hole,
                match_team_a, match_team_b, created_at, updated_at, finished_at
         FROM games
         WHERE id = $1
     `, id).Scan(
-		&row.ID, &row.CourseID, &row.CourseName, &row.Variant, &row.StartingLead, &row.CurrentHole,
+		&row.ID, &row.CourseID, &row.CourseName, &row.GameType, &row.Variant, &row.StartingLead, &row.CurrentHole,
 		&row.MatchTeamA, &row.MatchTeamB, &row.CreatedAt, &row.UpdatedAt, &row.FinishedAt,
 	)
 	if err != nil {

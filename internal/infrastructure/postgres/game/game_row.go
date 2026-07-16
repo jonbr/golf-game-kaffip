@@ -6,6 +6,7 @@ type GameRow struct {
 	ID           string
 	CourseID     string
 	CourseName   string
+	GameType     string
 	Variant      string
 	StartingLead int
 	CurrentHole  int
@@ -44,6 +45,7 @@ type GameSummaryRow struct {
 	ID          string
 	CourseID    string
 	CourseName  string
+	GameType    string
 	Variant     string
 	CurrentHole int
 	TotalHoles  int

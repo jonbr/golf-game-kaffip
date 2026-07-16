@@ -14,7 +14,7 @@ Content-Type: application/json
 
 {
   "name": "Player-new-4",
-  "handicap": 40.1
+  "handicap": 1.6
 }
 
 
@@ -53,13 +53,13 @@ DELETE {{baseUrl}}/players/1
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
-POST {{baseUrl}}/games
+POST {{baseUrl}}/games/team_play
 Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
-  "team_a": [1, 2],
-  "team_b": [3, 4],
+  "team_a": [1, 3],
+  "team_b": [2, 4],
   "variant": "gross"
 }
 
@@ -118,4 +118,4 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1784029805139758000/finish
+POST {{baseUrl}}/games/game_1784212427682890000/finish

@@ -13,6 +13,7 @@ type PlayerScoreInput struct {
 	TeamID   string // "A" or "B"
 }
 
+// TODO: Rename function since games types are increasing!
 // calculateHoleResult computes the full HoleResult for a single hole, given
 // the hole's info, the four players' gross scores, the game's variant, and
 // the course's total hole count (needed for handicap stroke allocation).
@@ -40,6 +41,60 @@ func calculateHoleResult(hole HoleInfo, inputs []PlayerScoreInput, variant Varia
 		TeamTotalWinnerTeam: teamTotalWinner,
 		PointsA:             pointsA,
 		PointsB:             pointsB,
+	}, nil
+}
+
+// calculateMatchPlayHoleResult scores a single hole for 1v1 match play:
+// lower net score wins the hole (1 point), equal net scores halve it
+// (0 points either side). Handicap strokes always apply, and there are
+// no birdie/eagle bonus categories in this format.
+func calculateMatchPlayHoleResult(hole HoleInfo, inputs []PlayerScoreInput, variant Variant, players map[int64]*player.Player, totalHoles int) (*HoleResult, error) {
+	if len(inputs) != 2 {
+		return nil, fmt.Errorf("expected exactly 2 player scores, got %d", len(inputs))
+	}
+
+	results := make([]PlayerHoleResult, 0, 2)
+	scoringBasisByTeam := make(map[string]int, 2)
+
+	for _, in := range inputs {
+		p, ok := players[in.PlayerID]
+		if !ok {
+			return nil, fmt.Errorf("unknown player id %d", in.PlayerID)
+		}
+
+		strokes := 0
+		if variant == VariantNet {
+			strokes = strokesReceived(p.Handicap, hole.StrokeIndex, totalHoles)
+		}
+		net := in.Gross - strokes
+
+		scoringBasisByTeam[in.TeamID] = net
+
+		results = append(results, PlayerHoleResult{
+			PlayerID: in.PlayerID,
+			Gross:    in.Gross,
+			Net:      net,
+			Strokes:  strokes,
+		})
+	}
+
+	pointsA, pointsB := 0, 0
+	winner := ""
+	switch {
+	case scoringBasisByTeam["A"] < scoringBasisByTeam["B"]:
+		pointsA = 1
+		winner = "A"
+	case scoringBasisByTeam["B"] < scoringBasisByTeam["A"]:
+		pointsB = 1
+		winner = "B"
+	}
+
+	return &HoleResult{
+		Hole:               hole,
+		Scores:             results,
+		LowScoreWinnerTeam: winner,
+		PointsA:            pointsA,
+		PointsB:            pointsB,
 	}, nil
 }
 
