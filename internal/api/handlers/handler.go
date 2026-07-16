@@ -9,23 +9,27 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Handler struct {
 	GameService   *application.GameService
 	PlayerService *application.PlayerService
 	Logger        *slog.Logger
+	DB            *pgxpool.Pool
 }
 
 func NewHandler(
 	gameService *application.GameService,
 	playerService *application.PlayerService,
 	logger *slog.Logger,
+	db *pgxpool.Pool,
 ) *Handler {
 	return &Handler{
 		GameService:   gameService,
 		PlayerService: playerService,
 		Logger:        logger,
+		DB:            db,
 	}
 }
 

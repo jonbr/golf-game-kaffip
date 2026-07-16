@@ -88,7 +88,7 @@ func Initialize() (*App, error) {
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, playerService, logger)
+	h := handlers.NewHandler(gameService, playerService, logger, db)
 
 	return &App{
 		Config:      cfg,
