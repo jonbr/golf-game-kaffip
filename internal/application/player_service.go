@@ -14,9 +14,12 @@ func NewPlayerService(players player.Repository) *PlayerService {
 	return &PlayerService{players: players}
 }
 
-func (s *PlayerService) CreatePlayer(ctx context.Context, name string, handicap float64) (*player.Player, error) {
+func (s *PlayerService) CreatePlayer(ctx context.Context, name, email string, handicap float64) (*player.Player, error) {
 	if name == "" {
 		return nil, NewServiceError("validation_error", map[string]any{"field": "name", "reason": "required"})
+	}
+	if email == "" {
+		return nil, NewServiceError("validation_error", map[string]any{"field": "email", "reason": "required"})
 	}
 	if handicap < 0 {
 		return nil, NewServiceError("validation_error", map[string]any{"field": "handicap", "reason": "must be non-negative"})
@@ -24,10 +27,14 @@ func (s *PlayerService) CreatePlayer(ctx context.Context, name string, handicap 
 
 	p := &player.Player{
 		Name:     name,
+		Email:    email,
 		Handicap: handicap,
 	}
 
 	if err := s.players.Create(ctx, p); err != nil {
+		if errors.Is(err, player.ErrEmailAlreadyExists) {
+			return nil, NewServiceError("email_already_exists", map[string]any{"email": email})
+		}
 		return nil, err
 	}
 

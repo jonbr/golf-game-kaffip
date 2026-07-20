@@ -3,9 +3,11 @@ package player
 import (
 	"context"
 	"errors"
+	"fmt"
 	"golf-game-kaffip/internal/domain/player"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -63,17 +65,27 @@ func (r *PlayerRepository) GetTeamsForGame(
 
 func (r *PlayerRepository) Create(ctx context.Context, p *player.Player) error {
 	query := `
-        INSERT INTO players (name, handicap)
-        VALUES ($1, $2)
+        INSERT INTO players (name, email, handicap)
+        VALUES ($1, $2, $3)
         RETURNING id, created_at, updated_at;
     `
 
-	return r.db.QueryRow(ctx, query, p.Name, p.Handicap).
+	err := r.db.QueryRow(ctx, query, p.Name, p.Email, p.Handicap).
 		Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return player.ErrEmailAlreadyExists
+		}
+		return fmt.Errorf("failed to insert player: %w", err)
+	}
+
+	return nil
 }
 
 func (r *PlayerRepository) FindAll(ctx context.Context) ([]*player.Player, error) {
-	query := `SELECT id, name, handicap, created_at, updated_at FROM players WHERE deleted_at IS NULL`
+	query := `SELECT id, name, email, handicap, created_at, updated_at FROM players WHERE deleted_at IS NULL`
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -83,7 +95,7 @@ func (r *PlayerRepository) FindAll(ctx context.Context) ([]*player.Player, error
 	var players []*player.Player
 	for rows.Next() {
 		p := &player.Player{}
-		if err := rows.Scan(&p.ID, &p.Name, &p.Handicap, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Email, &p.Handicap, &p.CreatedAt, &p.UpdatedAt); err != nil {
 			return nil, err
 		}
 		players = append(players, p)
@@ -97,13 +109,13 @@ func (r *PlayerRepository) FindByID(ctx context.Context, id int64, includeDelete
 
 	if includeDeleted {
 		query = `
-            SELECT id, name, handicap, created_at, updated_at, deleted_at
+            SELECT id, name, email, handicap, created_at, updated_at, deleted_at
             FROM players
             WHERE id = $1
         `
 	} else {
 		query = `
-            SELECT id, name, handicap, created_at, updated_at, deleted_at
+            SELECT id, name, email, handicap, created_at, updated_at, deleted_at
             FROM players
             WHERE id = $1
               AND deleted_at IS NULL
@@ -111,7 +123,7 @@ func (r *PlayerRepository) FindByID(ctx context.Context, id int64, includeDelete
 	}
 
 	p := &player.Player{}
-	err := r.db.QueryRow(ctx, query, id).Scan(&p.ID, &p.Name, &p.Handicap, &p.CreatedAt, &p.UpdatedAt, &p.DeletedAt)
+	err := r.db.QueryRow(ctx, query, id).Scan(&p.ID, &p.Name, &p.Email, &p.Handicap, &p.CreatedAt, &p.UpdatedAt, &p.DeletedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, player.ErrPlayerNotFound
@@ -124,9 +136,9 @@ func (r *PlayerRepository) FindByID(ctx context.Context, id int64, includeDelete
 func (r *PlayerRepository) Update(ctx context.Context, p *player.Player) error {
 	cmd, err := r.db.Exec(ctx,
 		`UPDATE players 
-         SET name = $1, handicap = $2, updated_at = NOW() 
-         WHERE id = $3`,
-		p.Name, p.Handicap, p.ID,
+         SET name = $1, email = $2, handicap = $3, updated_at = NOW() 
+         WHERE id = $4`,
+		p.Name, p.Email, p.Handicap, p.ID,
 	)
 	if err != nil {
 		return err

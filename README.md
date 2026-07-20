@@ -121,19 +121,19 @@ Integration tests require Docker to be running.
 
 ## API overview
 
-| Method | Path                              | Description                          |
-|--------|------------------------------------|---------------------------------------|
-| GET    | `/health`                           | Health check                          |
-| POST   | `/players`                          | Create a player                       |
-| GET    | `/players`                          | List players                          |
-| GET    | `/players/{id}`                     | Get a player                          |
-| PUT    | `/players/{id}`                     | Update a player                       |
-| DELETE | `/players/{id}`                     | Soft-delete a player                   |
-| POST   | `/games`                            | Create a game                         |
-| GET    | `/games`                            | List games (optionally `?status=active\|finished`) |
-| GET    | `/games/{id}`                       | Get full game state                    |
-| PUT    | `/games/{id}/holes/{holeNumber}/score` | Submit or correct a hole's score  |
-| POST   | `/games/{id}/finish`                | Finish a game at its current hole      |
+| Method | Path                                   | Description                           |
+|--------|----------------------------------------|---------------------------------------|
+| GET    | `/health`                              | Health check                          |
+| POST   | `/players`                             | Create a player                       |
+| GET    | `/players`                             | List players                          |
+| GET    | `/players/{id}`                        | Get a player                          |
+| PUT    | `/players/{id}`                        | Update a player                       |
+| DELETE | `/players/{id}`                        | Soft-delete a player                  |
+| POST   | `/games`                               | Create a game                         |
+| GET    | `/games`                               | List games (optionally `?status=active\|finished`) |
+| GET    | `/games/{id}`                          | Get full game state                   |
+| PUT    | `/games/{id}/holes/{holeNumber}/score` | Submit or correct a hole's score      |
+| POST   | `/games/{id}/finish`                   | Finish a game at its current hole     |
 
 A player can only belong to one unfinished game at a time; finishing a
 game frees its players to join another.

@@ -25,7 +25,7 @@ func (h *Handler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Execute service
-	p, err := h.PlayerService.CreatePlayer(ctx, req.Name, req.Handicap)
+	p, err := h.PlayerService.CreatePlayer(ctx, req.Name, req.Email, req.Handicap)
 	if err != nil {
 		logger.Error("create player failed", "error", err)
 		api.WriteError(w, err)
@@ -36,6 +36,7 @@ func (h *Handler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
 	api.JSON(w, http.StatusCreated, dto.CreatePlayerResponse{
 		ID:       p.ID,
 		Name:     p.Name,
+		Email:    p.Email,
 		Handicap: p.Handicap,
 	})
 }

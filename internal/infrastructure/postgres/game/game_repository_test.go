@@ -4,6 +4,7 @@ package game_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	domainCourse "golf-game-kaffip/internal/domain/course"
@@ -25,7 +26,10 @@ func TestGameRepository_CreateGameAndLoadGame(t *testing.T) {
 	players := make([]*domainPlayer.Player, 4)
 	handicaps := []float64{24.7, 14.7, 4.2, 34.2}
 	for i, h := range handicaps {
-		p := &domainPlayer.Player{Name: "Test Player", Handicap: h}
+		p := &domainPlayer.Player{
+			Name:     "Test Player",
+			Email:    fmt.Sprintf("player%d@example.com", i),
+			Handicap: h}
 		if err := playerRepo.Create(ctx, p); err != nil {
 			t.Fatalf("failed to seed player %d: %v", i, err)
 		}
@@ -45,7 +49,7 @@ func TestGameRepository_CreateGameAndLoadGame(t *testing.T) {
 		},
 	}
 
-	g, err := domainGame.NewGame("test-game-id", course, teamA, teamB, domainGame.GameTypeMatchPlay, domainGame.VariantGross)
+	g, err := domainGame.NewGame("test-game-id", course, teamA, teamB, domainGame.GameTypeTeamPlay, domainGame.VariantGross)
 	if err != nil {
 		t.Fatalf("NewGame failed: %v", err)
 	}
@@ -95,7 +99,10 @@ func TestGameRepository_SaveHoleResultAndReload(t *testing.T) {
 	players := make([]*domainPlayer.Player, 4)
 	handicaps := []float64{0, 0, 0, 0}
 	for i, h := range handicaps {
-		p := &domainPlayer.Player{Name: "Test Player", Handicap: h}
+		p := &domainPlayer.Player{
+			Name:     "Test Player",
+			Email:    fmt.Sprintf("player%d@example.com", i),
+			Handicap: h}
 		if err := playerRepo.Create(ctx, p); err != nil {
 			t.Fatalf("failed to seed player %d: %v", i, err)
 		}
