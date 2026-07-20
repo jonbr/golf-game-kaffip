@@ -88,7 +88,7 @@ func Initialize() (*App, error) {
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, playerService, logger, db)
+	h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
 
 	return &App{
 		Config:      cfg,

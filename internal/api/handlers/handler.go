@@ -13,10 +13,11 @@ import (
 )
 
 type Handler struct {
-	GameService   *application.GameService
-	PlayerService *application.PlayerService
-	Logger        *slog.Logger
-	DB            *pgxpool.Pool
+	GameService        *application.GameService
+	PlayerService      *application.PlayerService
+	Logger             *slog.Logger
+	DB                 *pgxpool.Pool
+	CORSAllowedOrigins []string
 }
 
 func NewHandler(
@@ -24,12 +25,14 @@ func NewHandler(
 	playerService *application.PlayerService,
 	logger *slog.Logger,
 	db *pgxpool.Pool,
+	corsAllowedOrigins []string,
 ) *Handler {
 	return &Handler{
-		GameService:   gameService,
-		PlayerService: playerService,
-		Logger:        logger,
-		DB:            db,
+		GameService:        gameService,
+		PlayerService:      playerService,
+		Logger:             logger,
+		DB:                 db,
+		CORSAllowedOrigins: corsAllowedOrigins,
 	}
 }
 
@@ -37,6 +40,7 @@ func (h *Handler) Router() http.Handler {
 	r := chi.NewRouter()
 
 	// Middlewares
+	r.Use(middleware.CORSMiddleware(h.CORSAllowedOrigins))
 	r.Use(middleware.LoggerMiddleware(h.Logger))
 	r.Use(middleware.RequestIDMiddleware(h.Logger))
 	r.Use(middleware.RecoveryMiddleware(h.Logger))
