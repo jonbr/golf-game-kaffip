@@ -79,14 +79,7 @@ func (s *GameService) CreateGame(ctx context.Context, gameType domainGame.GameTy
 	return g, nil
 }
 
-// TODO(backlog): GetGames currently calls the external course API once per
-// game row (N+1, and one bad course_id fails the entire list — see logs
-// 2026-07-11). Snapshot course_name (+ maybe location) into the games table
-// at CreateGame time so this becomes a pure DB read. Keep external
-// enrichment (holes, par, yardage) in GetGame only.
-func (s *GameService) GetGames(ctx context.Context, status string) ([]*domainGame.Game, error) {
-	logger := logging.FromCtx(ctx)
-
+func (s *GameService) GetGames(ctx context.Context, status string) ([]*domainGame.GameSummary, error) {
 	opts := domainGame.ListOptions{}
 	switch status {
 	case "", "all":
@@ -103,71 +96,20 @@ func (s *GameService) GetGames(ctx context.Context, status string) ([]*domainGam
 		return nil, fmt.Errorf("failed to retrieve games: %w", err)
 	}
 
-	games := make([]*domainGame.Game, 0, len(rows))
-	for _, row := range rows {
-		course, err := s.fetchCourse(ctx, logger, row.CourseID)
-		if err != nil {
-			return nil, err
-		}
-
-		teamA, teamB, err := s.players.GetTeamsForGame(ctx, row.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load teams for game %s: %w", row.ID, err)
-		}
-
-		games = append(games, &domainGame.Game{
-			ID:          row.ID,
-			Course:      course,
-			TeamA:       teamA,
-			TeamB:       teamB,
-			CurrentHole: row.CurrentHole,
-			CreatedAt:   row.CreatedAt,
-			UpdatedAt:   row.UpdatedAt,
-			FinishedAt:  row.FinishedAt,
-			MatchScore: domainGame.MatchScore{
-				TeamA: row.MatchScore.TeamA,
-				TeamB: row.MatchScore.TeamB,
-			},
-			HoleResults: make(map[int]*domainGame.HoleResult),
-		})
-	}
-
-	return games, nil
+	return rows, nil
 }
 
 func (s *GameService) GetGame(ctx context.Context, id string) (*domainGame.Game, error) {
-	logger := logging.FromCtx(ctx)
-
-	row, err := s.games.LoadGame(ctx, id)
+	// LoadGame already returns a fully populated Game (course holes,
+	// GameType, Variant, StartingLead, HoleResults, TeamA/TeamB) straight
+	// from local storage — no need to rebuild it or hit the external
+	// course API again (that only happens once, at CreateGame).
+	g, err := s.games.LoadGame(ctx, id)
 	if err != nil {
 		return nil, NewServiceError("game_not_found", map[string]any{"game_id": id})
 	}
 
-	course, err := s.fetchCourse(ctx, logger, row.Course.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	teamA, teamB, err := s.players.GetTeamsForGame(ctx, row.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domainGame.Game{
-		ID:          row.ID,
-		Course:      course,
-		TeamA:       teamA,
-		TeamB:       teamB,
-		CurrentHole: row.CurrentHole,
-		CreatedAt:   row.CreatedAt,
-		UpdatedAt:   row.UpdatedAt,
-		FinishedAt:  row.FinishedAt,
-		MatchScore: domainGame.MatchScore{
-			TeamA: row.MatchScore.TeamA,
-			TeamB: row.MatchScore.TeamB,
-		},
-		HoleResults: make(map[int]*domainGame.HoleResult),
-	}, nil
+	return g, nil
 }
 
 func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
@@ -213,11 +155,16 @@ func (s *GameService) FinishGame(ctx context.Context, gameID string) error {
 }
 
 // buildScoreInputs validates that scores are provided for exactly the
-// game's 4 registered players (2 per team) and tags each with its TeamID.
+// game's registered players (4 for team play, 2 for match play) and tags
+// each with its TeamID.
 func buildScoreInputs(g *domainGame.Game, scores []dto.PlayerGrossScore) ([]domainGame.PlayerScoreInput, error) {
-	if len(scores) != 4 {
+	expected := 4
+	if g.GameType == domainGame.GameTypeMatchPlay {
+		expected = 2
+	}
+	if len(scores) != expected {
 		return nil, NewServiceError("invalid_score_count", map[string]any{
-			"expected": 4,
+			"expected": expected,
 			"got":      len(scores),
 		})
 	}
@@ -296,8 +243,9 @@ func (s *GameService) validateActiveGameConflict(ctx context.Context, playerIDs 
 	return nil
 }
 
-// fetchCourse centralizes external course lookup + error mapping,
-// used by GetGames, GetGame, and CreateGame.
+// fetchCourse centralizes external course lookup + error mapping. Only
+// CreateGame should call this — course data is fetched once and stored
+// locally, everything else reads it back via LoadGame/ListSummaries.
 func (s *GameService) fetchCourse(ctx context.Context, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
 	course, err := s.externalCourseService.GetExternalCourse(ctx, courseID)
 	if err != nil {

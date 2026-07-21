@@ -135,12 +135,16 @@ func (r *PlayerRepository) FindByID(ctx context.Context, id int64, includeDelete
 
 func (r *PlayerRepository) Update(ctx context.Context, p *player.Player) error {
 	cmd, err := r.db.Exec(ctx,
-		`UPDATE players 
-         SET name = $1, email = $2, handicap = $3, updated_at = NOW() 
+		`UPDATE players
+         SET name = $1, email = $2, handicap = $3, updated_at = NOW()
          WHERE id = $4`,
 		p.Name, p.Email, p.Handicap, p.ID,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return player.ErrEmailAlreadyExists
+		}
 		return err
 	}
 

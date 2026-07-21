@@ -103,6 +103,7 @@ func (h *Handler) UpdatePlayer(w http.ResponseWriter, r *http.Request) {
 	// 2. Execute service
 	updated, err := h.PlayerService.UpdatePlayer(ctx, id, playerDomain.UpdatePlayerParams{
 		Name:     req.Name,
+		Email:    req.Email,
 		Handicap: req.Handicap,
 	})
 	if err != nil {
@@ -150,6 +151,7 @@ func toPlayerResponse(p *playerDomain.Player) dto.GetPlayerResponse {
 	return dto.GetPlayerResponse{
 		ID:       p.ID,
 		Name:     p.Name,
+		Email:    p.Email,
 		Handicap: p.Handicap,
 	}
 }

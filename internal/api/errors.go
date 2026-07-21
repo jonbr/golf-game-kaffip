@@ -6,8 +6,8 @@ import (
 )
 
 type APIError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string `json:"error"`
+	Message string `json:"message,omitempty"`
 	Details any    `json:"details,omitempty"`
 }
 

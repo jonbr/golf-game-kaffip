@@ -63,12 +63,18 @@ func (s *PlayerService) UpdatePlayer(ctx context.Context, id int64, req player.U
 	if req.Name != nil {
 		existing.Name = *req.Name
 	}
+	if req.Email != nil {
+		existing.Email = *req.Email
+	}
 	if req.Handicap != nil {
 		existing.Handicap = *req.Handicap
 	}
 
 	// 4. Persist
 	if err := s.players.Update(ctx, existing); err != nil {
+		if errors.Is(err, player.ErrEmailAlreadyExists) {
+			return nil, NewServiceError("email_already_exists", map[string]any{"email": existing.Email})
+		}
 		return nil, err
 	}
 	return existing, nil
