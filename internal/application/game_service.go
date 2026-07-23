@@ -112,6 +112,14 @@ func (s *GameService) GetGame(ctx context.Context, id string) (*domainGame.Game,
 	return g, nil
 }
 
+func (s *GameService) SearchCourses(ctx context.Context, query string) ([]opengolfapi.CourseSearchResult, error) {
+	results, err := s.externalCourseService.SearchCourses(ctx, query)
+	if err != nil {
+		return nil, NewServiceError("external_api_error", map[string]any{"underlying": err.Error()})
+	}
+	return results, nil
+}
+
 func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 

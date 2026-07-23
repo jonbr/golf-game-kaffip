@@ -42,7 +42,6 @@ func (h *Handler) Router() http.Handler {
 	// Middlewares
 	r.Use(middleware.CORSMiddleware(h.CORSAllowedOrigins))
 	r.Use(middleware.LoggerMiddleware(h.Logger))
-	r.Use(middleware.RequestIDMiddleware(h.Logger))
 	r.Use(middleware.RecoveryMiddleware(h.Logger))
 
 	// health check
@@ -62,6 +61,9 @@ func (h *Handler) Router() http.Handler {
 	r.Get("/games/{id}", h.GetGame)
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 	r.Post("/games/{id}/finish", h.FinishGame)
+
+	// Courses External API
+	r.Get("/courses/search", h.SearchCourses)
 
 	// Print all registered routes
 	PrintRoutes(r)

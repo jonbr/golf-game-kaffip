@@ -18,6 +18,8 @@ func LoggerMiddleware(base *slog.Logger) func(http.Handler) http.Handler {
 			logger := base.With("request_id", reqID)
 			ctx := logging.WithLogger(r.Context(), logger)
 
+			w.Header().Set("X-Request-Id", reqID)
+
 			start := time.Now()
 			ww := chimw.NewWrapResponseWriter(w, r.ProtoMajor)
 

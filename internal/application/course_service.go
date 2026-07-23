@@ -21,3 +21,7 @@ func (s *ExternalCourseService) GetExternalCourse(ctx context.Context, id string
 	}
 	return opengolfapi.MapCourseToDomain(res), nil
 }
+
+func (s *ExternalCourseService) SearchCourses(ctx context.Context, query string) ([]opengolfapi.CourseSearchResult, error) {
+	return s.api.SearchCourses(ctx, query)
+}

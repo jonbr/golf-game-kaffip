@@ -120,3 +120,11 @@ Content-Type: application/json
 ### Finish Game
 ### ---------------------------------------
 POST {{baseUrl}}/games/game_1784212571711495000/finish
+
+
+### ---------------------------------------
+### Find Course
+### ---------------------------------------
+//GET  {{baseUrl}}/courses/search?q=grafarholt
+
+GET  {{baseUrl}}/courses/search?q=bay+hill

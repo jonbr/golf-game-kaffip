@@ -65,3 +65,22 @@ type GreenInfo struct {
 	Front  any `json:"front"`
 	Back   any `json:"back"`
 }
+
+type CourseSearchResult struct {
+	ID         string  `json:"id"`
+	Name       string  `json:"name"`
+	CourseName string  `json:"course_name"`
+	Latitude   float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+	State      *string `json:"state"`
+	City       *string `json:"city"`
+	Type       *string `json:"type"`
+	Par        *int    `json:"par"`
+	Phone      any     `json:"phone"`
+	Website    any     `json:"website"`
+}
+
+type CourseSearchResponse struct {
+	Courses []CourseSearchResult `json:"courses"`
+	Total   int                  `json:"total"`
+}
