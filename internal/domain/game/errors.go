@@ -6,6 +6,7 @@ import (
 )
 
 var ErrGameNotFound = errors.New("game not found")
+var ErrTeamEventNotFound = errors.New("team event not found")
 
 type PlayersInActiveGame struct {
 	PlayerID string

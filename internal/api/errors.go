@@ -36,6 +36,9 @@ var serviceErrorStatus = map[string]int{
 	"invalid_game_type":             http.StatusBadRequest,
 	"invalid_game_params":           http.StatusBadRequest,
 	"email_already_exists":          http.StatusConflict,
+	"team_event_not_found":          http.StatusNotFound,
+	"invalid_event":                 http.StatusBadRequest,
+	"duplicate_player_in_event":     http.StatusBadRequest,
 }
 
 func StatusCode(err error) int {

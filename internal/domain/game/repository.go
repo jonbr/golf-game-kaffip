@@ -19,3 +19,9 @@ type Repository interface {
 	PlayersInActiveGame(ctx context.Context, playersIDs []int64) (int64, error)
 	PlayerExists(ctx context.Context, id int64) (bool, error)
 }
+
+type TeamEventRepository interface {
+	CreateEvent(ctx context.Context, event *TeamEvent) error
+	LoadEvent(ctx context.Context, id string) (*TeamEvent, error)
+	FinishEvent(ctx context.Context, id string) error
+}

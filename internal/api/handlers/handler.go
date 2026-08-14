@@ -15,6 +15,7 @@ import (
 type Handler struct {
 	GameService        *application.GameService
 	PlayerService      *application.PlayerService
+	TeamEventService   *application.TeamEventService
 	Logger             *slog.Logger
 	DB                 *pgxpool.Pool
 	CORSAllowedOrigins []string
@@ -23,6 +24,7 @@ type Handler struct {
 func NewHandler(
 	gameService *application.GameService,
 	playerService *application.PlayerService,
+	teamEventService *application.TeamEventService,
 	logger *slog.Logger,
 	db *pgxpool.Pool,
 	corsAllowedOrigins []string,
@@ -30,6 +32,7 @@ func NewHandler(
 	return &Handler{
 		GameService:        gameService,
 		PlayerService:      playerService,
+		TeamEventService:   teamEventService,
 		Logger:             logger,
 		DB:                 db,
 		CORSAllowedOrigins: corsAllowedOrigins,
@@ -61,6 +64,11 @@ func (h *Handler) Router() http.Handler {
 	r.Get("/games/{id}", h.GetGame)
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 	r.Post("/games/{id}/finish", h.FinishGame)
+
+	// Events
+	r.Post("/events", h.CreateEvent)
+	r.Get("/events/{id}", h.GetEvent)
+	r.Post("/events/{id}/finish", h.FinishEvent)
 
 	// Courses External API
 	r.Get("/courses/search", h.SearchCourses)

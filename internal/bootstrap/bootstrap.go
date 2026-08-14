@@ -51,7 +51,7 @@ func Initialize() (*App, error) {
 	}
 
 	// Run migrations BEFORE creating pgxpool
-	if err := runMigrations(dsn); err != nil {
+	if err := RunMigrations(dsn); err != nil {
 		return nil, err
 	}
 
@@ -85,10 +85,16 @@ func Initialize() (*App, error) {
 
 	playerService := application.NewPlayerService(playerRepo)
 
+	teamEventRepo := gamedb.NewTeamEventRepository(db, gameRepo)
+	teamEventService := application.NewTeamEventService(teamEventRepo, playerRepo, gameRepo, externalAPI)
+
+	//h := handlers.NewHandler(gameService, playerService, teamEventService, logger, db)
+
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
+	h := handlers.NewHandler(gameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
+	//h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
 
 	return &App{
 		Config:      cfg,
@@ -100,7 +106,7 @@ func Initialize() (*App, error) {
 	}, nil
 }
 
-func runMigrations(dsn string) error {
+func RunMigrations(dsn string) error {
 	// Open a dedicated sql.DB for migrations
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {

@@ -58,7 +58,7 @@ func (s *GameService) CreateGame(ctx context.Context, gameType domainGame.GameTy
 		return nil, err
 	}
 
-	course, err := s.fetchCourse(ctx, logger, req.CourseID)
+	course, err := fetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
 	if err != nil {
 		return nil, err
 	}
@@ -254,8 +254,8 @@ func (s *GameService) validateActiveGameConflict(ctx context.Context, playerIDs 
 // fetchCourse centralizes external course lookup + error mapping. Only
 // CreateGame should call this — course data is fetched once and stored
 // locally, everything else reads it back via LoadGame/ListSummaries.
-func (s *GameService) fetchCourse(ctx context.Context, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
-	course, err := s.externalCourseService.GetExternalCourse(ctx, courseID)
+func fetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
+	course, err := ecs.GetExternalCourse(ctx, courseID)
 	if err != nil {
 		logger.Info("external course lookup failed", "course_id", courseID, "error", err.Error())
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
