@@ -9,8 +9,8 @@ func (h *Handler) SearchCourses(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "search courses")
 
 	query := r.URL.Query().Get("q")
-	if query == "" {
-		api.WriteBadRequest(w, "missing_query", "query parameter 'q' is required", nil)
+	if len(query) < 3 {
+		api.WriteBadRequest(w, "query_too_short", "query must be at least 3 characters", nil)
 		return
 	}
 
