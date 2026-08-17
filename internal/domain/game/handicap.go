@@ -34,11 +34,18 @@ func strokesReceived(handicap float64, strokeIndex int, totalHoles int) int {
 	return strokes
 }
 
-// computeStartingLead implements the rudimentary Variant Gross handicap
-// allowance: the team with the higher combined handicap starts with a
-// lead equal to the rounded difference in combined handicaps.
+// computeStartingLead implements the Variant Gross handicap allowance:
+// the difference between the two teams' combined handicaps, scaled down
+// by dividing by 1.5, becomes the starting lead. The team with the
+// higher combined handicap is favored. Fractional results are truncated
+// toward zero (Go's int conversion), not rounded — e.g. 3.5 -> 3,
+// -3.5 -> -3.
 // Positive → favors TeamA. Negative → favors TeamB. Zero → even.
 func computeStartingLead(teamA, teamB []*player.Player) int {
+	if len(teamA) == 0 || len(teamB) == 0 {
+		return 0
+	}
+
 	var combinedA, combinedB float64
 	for _, p := range teamA {
 		combinedA += p.Handicap
@@ -47,6 +54,5 @@ func computeStartingLead(teamA, teamB []*player.Player) int {
 		combinedB += p.Handicap
 	}
 
-	diff := combinedA - combinedB
-	return int(math.Round(diff))
+	return int((combinedA - combinedB) / 1.5)
 }

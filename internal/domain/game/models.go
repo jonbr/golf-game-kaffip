@@ -111,8 +111,13 @@ func NewGame(
 		return nil, err
 	}
 
+	// The one-time starting lead only applies to team play — match play is
+	// always a 1v1 comparison, so it has no "combined team handicap" to
+	// average in the first place (that's handled per-hole client-side
+	// instead, informationally). Team play + net doesn't use it either,
+	// since strokes are already allocated per hole there.
 	startingLead := 0
-	if variant == VariantGross {
+	if variant == VariantGross && gameType == GameTypeTeamPlay {
 		startingLead = computeStartingLead(teamA, teamB)
 	}
 

@@ -61,19 +61,48 @@ func TestComputeStartingLead(t *testing.T) {
 			name:  "team A higher combined handicap, positive lead favors A",
 			teamA: []*player.Player{mkPlayer(14), mkPlayer(10)}, // 24
 			teamB: []*player.Player{mkPlayer(8), mkPlayer(4)},   // 12
-			want:  12,
+			// diff = 12, 12/1.5 = 8.0 -> truncates to 8
+			want: 8,
 		},
 		{
 			name:  "team B higher combined handicap, negative lead favors B",
 			teamA: []*player.Player{mkPlayer(8), mkPlayer(4)},   // 12
 			teamB: []*player.Player{mkPlayer(14), mkPlayer(10)}, // 24
-			want:  -12,
+			// diff = -12, -12/1.5 = -8.0 -> truncates to -8
+			want: -8,
 		},
 		{
-			name:  "fractional difference rounds to nearest int",
+			name:  "fractional diff truncates toward zero, not rounds",
 			teamA: []*player.Player{mkPlayer(24.7), mkPlayer(14.7)}, // 39.4
 			teamB: []*player.Player{mkPlayer(4.2), mkPlayer(34.2)},  // 38.4
-			want:  1,                                                // diff 1.0 -> 1
+			// diff = 1.0, 1.0/1.5 = 0.666... -> truncates to 0
+			want: 0,
+		},
+		{
+			name:  "larger fractional diff truncates down, not to nearest",
+			teamA: []*player.Player{mkPlayer(30), mkPlayer(20)}, // 50
+			teamB: []*player.Player{mkPlayer(10), mkPlayer(10)}, // 20
+			// diff = 30, 30/1.5 = 20.0 exactly -> 20
+			want: 20,
+		},
+		{
+			name:  "negative fractional result truncates toward zero, not down",
+			teamA: []*player.Player{mkPlayer(10)},
+			teamB: []*player.Player{mkPlayer(15)},
+			// diff = -5, -5/1.5 = -3.333... -> truncates to -3, not -4
+			want: -3,
+		},
+		{
+			name:  "empty team A returns zero without panicking",
+			teamA: []*player.Player{},
+			teamB: []*player.Player{mkPlayer(10)},
+			want:  0,
+		},
+		{
+			name:  "empty team B returns zero without panicking",
+			teamA: []*player.Player{mkPlayer(10)},
+			teamB: []*player.Player{},
+			want:  0,
 		},
 	}
 
