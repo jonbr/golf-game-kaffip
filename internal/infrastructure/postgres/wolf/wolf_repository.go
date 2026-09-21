@@ -3,19 +3,19 @@ package wolf
 import (
 	"context"
 	"fmt"
-	"golf-game-kaffip/internal/domain/wolf"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	domainWolf "golf-game-kaffip/internal/domain/wolf"
+	gamedb "golf-game-kaffip/internal/infrastructure/postgres/game"
 )
 
 type WolfRepository struct {
-	db *pgxpool.Pool // Assuming you're using pgxpool for database connection
+	db *pgxpool.Pool
 }
 
-func NewWolfRepository(db *pgxpool.Pool) *WolfRepository {
-	return &WolfRepository{
-		db: db, // Initialize your database connection here
-	}
+func NewRepository(db *pgxpool.Pool) *WolfRepository {
+	return &WolfRepository{db: db}
 }
 
 // CreateGame persists a new Wolf game: the game row, its 4-player fixed
@@ -23,36 +23,34 @@ func NewWolfRepository(db *pgxpool.Pool) *WolfRepository {
 // within a single transaction — so a partial failure never leaves an
 // inconsistent game record, and SetHoleScore/GetGame never need to call
 // the external course API again.
-func (r *WolfRepository) CreateGame(ctx context.Context, g *wolf.Game) error {
+func (r *WolfRepository) CreateGame(ctx context.Context, g *domainWolf.Game) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, `
-        INSERT INTO wolf_games (id, course_id, course_name, current_hole, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
-    `, g.ID, g.Course.ID, g.Course.Name, g.CurrentHole)
-	if err != nil {
-		return fmt.Errorf("failed to insert wolf game: %w", err)
+	if err := gamedb.InsertGameRow(ctx, tx, gamedb.GameInsertParams{
+		ID:          g.ID,
+		GameType:    "wolf",
+		CourseID:    g.Course.ID,
+		CourseName:  g.Course.Name,
+		Variant:     "gross", // unused by wolf, column default
+		CurrentHole: g.CurrentHole,
+	}); err != nil {
+		return err
 	}
 
 	for seat, p := range g.Players {
-		if _, err := tx.Exec(ctx, `
-            INSERT INTO wolf_game_players (wolf_game_id, player_id, seat)
-            VALUES ($1, $2, $3)
-        `, g.ID, p.ID, seat); err != nil {
-			return fmt.Errorf("failed to insert wolf player seat %d: %w", seat, err)
+		s := seat
+		if err := gamedb.InsertGamePlayer(ctx, tx, g.ID, p.ID, nil, &s); err != nil {
+			return err
 		}
 	}
 
 	for _, h := range g.Course.HolesData {
-		if _, err := tx.Exec(ctx, `
-            INSERT INTO wolf_game_course_holes (wolf_game_id, hole_number, par, handicap_index)
-            VALUES ($1, $2, $3, $4)
-        `, g.ID, h.Number, h.Par, h.HandicapIndex); err != nil {
-			return fmt.Errorf("failed to insert wolf course hole %d: %w", h.Number, err)
+		if err := gamedb.InsertCourseHole(ctx, tx, g.ID, h.Number, h.Par, h.HandicapIndex); err != nil {
+			return err
 		}
 	}
 

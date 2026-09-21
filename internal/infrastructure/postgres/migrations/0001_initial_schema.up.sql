@@ -4,10 +4,13 @@
 CREATE TABLE players (
     id          BIGSERIAL PRIMARY KEY,
     name        TEXT NOT NULL,
+    email       TEXT NOT NULL,
     handicap    DOUBLE PRECISION NOT NULL,
     deleted_at  TIMESTAMP NULL,
     created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
+    updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT players_email_unique UNIQUE (email)
 );
 
 CREATE INDEX idx_players_deleted_at
@@ -15,28 +18,41 @@ CREATE INDEX idx_players_deleted_at
 
 -- ============================
 -- Games
+-- Shared header for every game type: points_play, match_play, wolf,
+-- and team_event (which aggregates other games via team_event_id).
+-- variant/starting_lead/match_team_a/match_team_b are only meaningful
+-- for points_play/match_play; wolf and team_event rows leave them at
+-- their defaults.
 -- ============================
 CREATE TABLE games (
-    id            TEXT PRIMARY KEY,
-    course_id     TEXT NOT NULL,
-    course_name   TEXT NOT NULL,
-    variant       TEXT NOT NULL DEFAULT 'gross' CHECK (variant IN ('gross', 'net')),
-    starting_lead INTEGER NOT NULL DEFAULT 0,
-    current_hole  INTEGER NOT NULL DEFAULT 1,
-    match_team_a  INTEGER NOT NULL DEFAULT 0,
-    match_team_b  INTEGER NOT NULL DEFAULT 0,
-    created_at    TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMP NOT NULL DEFAULT NOW(),
-    finished_at   TIMESTAMP NULL
+    id             TEXT PRIMARY KEY,
+    game_type      TEXT NOT NULL DEFAULT 'points_play'
+                   CHECK (game_type IN ('points_play', 'match_play', 'wolf', 'team_event')),
+    course_id      TEXT NOT NULL,
+    course_name    TEXT NOT NULL,
+    variant        TEXT NOT NULL DEFAULT 'gross' CHECK (variant IN ('gross', 'net')),
+    starting_lead  INTEGER NOT NULL DEFAULT 0,
+    current_hole   INTEGER NOT NULL DEFAULT 1,
+    match_team_a   INTEGER NOT NULL DEFAULT 0,
+    match_team_b   INTEGER NOT NULL DEFAULT 0,
+    team_event_id  TEXT NULL REFERENCES games(id) ON DELETE SET NULL,
+    event_position INTEGER NULL,
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+    finished_at    TIMESTAMP NULL
 );
 
 -- ============================
 -- Game Players (join table)
+-- team is used by points_play/match_play/team_event matches ('A'/'B').
+-- seat is used by wolf's fixed rotation order (0-3). Exactly one of the
+-- two is populated depending on game_type.
 -- ============================
 CREATE TABLE game_players (
     game_id     TEXT NOT NULL,
     player_id   BIGINT NOT NULL,
-    team        CHAR(1) NOT NULL CHECK (team IN ('A', 'B')),
+    team        CHAR(1) NULL CHECK (team IN ('A', 'B')),
+    seat        INTEGER NULL CHECK (seat BETWEEN 0 AND 3),
     created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (game_id, player_id),

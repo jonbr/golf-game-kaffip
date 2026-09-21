@@ -114,55 +114,37 @@ func (r *GameRepository) CreateGame(ctx context.Context, g *domainGame.Game) err
 	}
 	defer tx.Rollback(ctx)
 
-	res, err := tx.Exec(ctx, `
-        UPDATE games
-        SET current_hole=$2, match_team_a=$3, match_team_b=$4, updated_at=NOW()
-        WHERE id=$1
-    `,
-		g.ID, g.CurrentHole, g.MatchScore.TeamA, g.MatchScore.TeamB,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to update game: %w", err)
+	teamA := "A"
+	teamB := "B"
+
+	if err := InsertGameRow(ctx, tx, GameInsertParams{
+		ID:           g.ID,
+		GameType:     string(g.GameType),
+		CourseID:     g.Course.ID,
+		CourseName:   g.Course.Name,
+		Variant:      string(g.Variant),
+		StartingLead: g.StartingLead,
+		CurrentHole:  g.CurrentHole,
+		MatchTeamA:   g.MatchScore.TeamA,
+		MatchTeamB:   g.MatchScore.TeamB,
+	}); err != nil {
+		return err
 	}
 
-	if res.RowsAffected() == 0 {
-		_, err = tx.Exec(ctx, `
-            INSERT INTO games (id, course_id, course_name, game_type, variant, starting_lead,
-                                current_hole, match_team_a, match_team_b, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-        `,
-			g.ID, g.Course.ID, g.Course.Name, string(g.GameType), string(g.Variant), g.StartingLead,
-			g.CurrentHole, g.MatchScore.TeamA, g.MatchScore.TeamB,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to insert game: %w", err)
+	for _, p := range g.TeamA {
+		if err := InsertGamePlayer(ctx, tx, g.ID, p.ID, &teamA, nil); err != nil {
+			return err
 		}
-
-		for _, h := range g.Course.HolesData {
-			if _, err := tx.Exec(ctx, `
-                INSERT INTO game_course_holes (game_id, hole_number, par, handicap_index)
-                VALUES ($1, $2, $3, $4)
-            `, g.ID, h.Number, h.Par, h.HandicapIndex); err != nil {
-				return fmt.Errorf("failed to insert course hole %d: %w", h.Number, err)
-			}
+	}
+	for _, p := range g.TeamB {
+		if err := InsertGamePlayer(ctx, tx, g.ID, p.ID, &teamB, nil); err != nil {
+			return err
 		}
+	}
 
-		for _, p := range g.TeamA {
-			if _, err := tx.Exec(ctx, `
-                INSERT INTO game_players (game_id, player_id, team, created_at)
-                VALUES ($1, $2, 'A', NOW())
-            `, g.ID, p.ID); err != nil {
-				return fmt.Errorf("failed to insert team A player: %w", err)
-			}
-		}
-
-		for _, p := range g.TeamB {
-			if _, err := tx.Exec(ctx, `
-                INSERT INTO game_players (game_id, player_id, team, created_at)
-                VALUES ($1, $2, 'B', NOW())
-            `, g.ID, p.ID); err != nil {
-				return fmt.Errorf("failed to insert team B player: %w", err)
-			}
+	for _, h := range g.Course.HolesData {
+		if err := InsertCourseHole(ctx, tx, g.ID, h.Number, h.Par, h.HandicapIndex); err != nil {
+			return err
 		}
 	}
 

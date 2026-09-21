@@ -15,7 +15,7 @@ Content-Type: application/json
 {
   "name": "Player-new-4",
   "email": "player4@example.com",
-  "handicap": 12.2
+  "handicap": 24.4
 }
 
 
@@ -50,17 +50,17 @@ DELETE {{baseUrl}}/players/1
 
 
 ### ---------------------------------------
-### Create Game
+### Create Game match_play | points_play
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
-POST {{baseUrl}}/games/points_playdd
+POST {{baseUrl}}/games/match_play
 Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
-  "team_a": [3,1],
-  "team_b": [4,2],
+  "team_a": [1],
+  "team_b": [2],
   "variant": "gross"
 }
 
@@ -132,7 +132,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1789998253794624000/finish
+POST {{baseUrl}}/games/game_1790025679310707000/finish
 
 
 ### ---------------------------------------
