@@ -51,6 +51,36 @@ func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := startRequest(r, "create wolf game")
+
+	// 1. Bind JSON
+	var req dto.CreateWolfGameRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("invalid JSON", "error", err)
+		api.WriteBadRequest(w, "invalid_input", "invalid JSON payload", nil)
+		return
+	}
+
+	// 2. Execute service
+	game, err := h.WolfGameService.CreateGame(ctx, req)
+	if err != nil {
+		if errors.Is(err, domainCourse.ErrCourseNotFound) {
+			logger.Info("create wolf game failed: course not found", "course_id", req.CourseID)
+			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
+			return
+		}
+		logger.Error("create wolf game failed", "error", err)
+		api.WriteError(w, err)
+		return
+	}
+
+	// 3. Send response
+	api.JSON(w, http.StatusCreated, dto.CreateWolfGameResponse{
+		GameID: game.ID,
+	})
+}
+
 func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get games")
 

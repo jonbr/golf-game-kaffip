@@ -12,7 +12,6 @@ type GameType string
 type Variant string
 
 const (
-	//GameTypeTeamPlay  GameType = "team_play"
 	GameTypePointsPlay GameType = "points_play"
 	GameTypeMatchPlay  GameType = "match_play"
 )

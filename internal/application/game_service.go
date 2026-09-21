@@ -2,16 +2,13 @@ package application
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"golf-game-kaffip/internal/api/dto"
-	domainCourse "golf-game-kaffip/internal/domain/course"
 	"golf-game-kaffip/internal/domain/game"
 	domainGame "golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
 	"golf-game-kaffip/internal/logging"
-	"log/slog"
 	"time"
 )
 
@@ -42,18 +39,18 @@ func (s *GameService) CreateGame(ctx context.Context, gameType domainGame.GameTy
 
 	playersIDs := append(req.TeamA, req.TeamB...)
 
-	if err := s.validatePlayersExist(ctx, logger, playersIDs); err != nil {
+	if err := validatePlayersExist(ctx, s.games, logger, playersIDs); err != nil {
 		return nil, err
 	}
-	if err := s.validateActiveGameConflict(ctx, playersIDs); err != nil {
+	if err := validateActiveGameConflict(ctx, s.games, logger, playersIDs); err != nil {
 		return nil, err
 	}
 
-	teamAPlayers, err := s.loadPlayers(ctx, req.TeamA)
+	teamAPlayers, err := loadPlayers(ctx, s.players, req.TeamA)
 	if err != nil {
 		return nil, err
 	}
-	teamBPlayers, err := s.loadPlayers(ctx, req.TeamB)
+	teamBPlayers, err := loadPlayers(ctx, s.players, req.TeamB)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +210,7 @@ func buildScoreInputs(g *domainGame.Game, scores []dto.PlayerGrossScore) ([]doma
 	return inputs, nil
 }
 
-func (s *GameService) loadPlayers(ctx context.Context, ids []int64) ([]*player.Player, error) {
+/*func (s *GameService) loadPlayers(ctx context.Context, ids []int64) ([]*player.Player, error) {
 	players := make([]*player.Player, 0, len(ids))
 	for _, id := range ids {
 		p, err := s.players.FindByID(ctx, id, false)
@@ -224,47 +221,7 @@ func (s *GameService) loadPlayers(ctx context.Context, ids []int64) ([]*player.P
 	}
 
 	return players, nil
-}
-
-func (s *GameService) validatePlayersExist(ctx context.Context, logger *slog.Logger, playerIDs []int64) error {
-	for _, pid := range playerIDs {
-		exists, err := s.games.PlayerExists(ctx, pid)
-		if err != nil {
-			return NewServiceError("internal_error", map[string]any{"underlying": err.Error()})
-		}
-		if !exists {
-			logger.Error("player existence validation failed", "player_id", pid)
-			return NewServiceError("player_not_found", map[string]any{"player_id": pid})
-		}
-	}
-	return nil
-}
-
-func (s *GameService) validateActiveGameConflict(ctx context.Context, playerIDs []int64) error {
-	blockingPlayer, err := s.games.PlayersInActiveGame(ctx, playerIDs)
-	if err != nil {
-		return NewServiceError("internal_error", map[string]any{"underlying": err.Error()})
-	}
-	if blockingPlayer != 0 {
-		return NewServiceError("player_in_active_game", map[string]any{"player_id": blockingPlayer})
-	}
-	return nil
-}
-
-// fetchCourse centralizes external course lookup + error mapping. Only
-// CreateGame should call this — course data is fetched once and stored
-// locally, everything else reads it back via LoadGame/ListSummaries.
-func fetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
-	course, err := ecs.GetExternalCourse(ctx, courseID)
-	if err != nil {
-		logger.Info("external course lookup failed", "course_id", courseID, "error", err.Error())
-		if errors.Is(err, domainCourse.ErrCourseNotFound) {
-			return nil, domainCourse.ErrCourseNotFound
-		}
-		return nil, NewServiceError("external_api_error", map[string]any{"underlying": err.Error()})
-	}
-	return course, nil
-}
+}*/
 
 func validateTeamSize(gameType domainGame.GameType, teamA, teamB []int64) error {
 	var want int

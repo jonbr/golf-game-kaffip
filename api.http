@@ -14,8 +14,8 @@ Content-Type: application/json
 
 {
   "name": "Player-new-4",
-  "email": "2jon@jon.is",
-  "handicap": 14.6
+  "email": "player4@example.com",
+  "handicap": 12.2
 }
 
 
@@ -54,14 +54,27 @@ DELETE {{baseUrl}}/players/1
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
-POST {{baseUrl}}/games/match_play
+POST {{baseUrl}}/games/points_playdd
 Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
-  "team_a": [3],
-  "team_b": [4],
+  "team_a": [3,1],
+  "team_b": [4,2],
   "variant": "gross"
+}
+
+### ---------------------------------------
+### Create Game Wolf
+### variant: "gross" (handicap surplus at start, no per-hole strokes)
+###       or "net" (full per-hole handicap strokes, except birdies/eagles)
+### ---------------------------------------
+POST {{baseUrl}}/games/wolf
+Content-Type: application/json
+
+{
+  "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+  "players": [1, 2, 3, 4]
 }
 
 
@@ -69,7 +82,7 @@ Content-Type: application/json
 ### Get Games
 ### optional ?status=active|finished
 ### ---------------------------------------
-GET {{baseUrl}}/games?status=finished
+GET {{baseUrl}}/games?status=active
 
 
 ### ---------------------------------------
@@ -119,7 +132,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1784212571711495000/finish
+POST {{baseUrl}}/games/game_1789998253794624000/finish
 
 
 ### ---------------------------------------

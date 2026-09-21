@@ -14,6 +14,7 @@ import (
 
 type Handler struct {
 	GameService        *application.GameService
+	WolfGameService    *application.WolfGameService
 	PlayerService      *application.PlayerService
 	TeamEventService   *application.TeamEventService
 	Logger             *slog.Logger
@@ -23,6 +24,7 @@ type Handler struct {
 
 func NewHandler(
 	gameService *application.GameService,
+	wolfGameService *application.WolfGameService,
 	playerService *application.PlayerService,
 	teamEventService *application.TeamEventService,
 	logger *slog.Logger,
@@ -31,6 +33,7 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		GameService:        gameService,
+		WolfGameService:    wolfGameService,
 		PlayerService:      playerService,
 		TeamEventService:   teamEventService,
 		Logger:             logger,
@@ -60,6 +63,9 @@ func (h *Handler) Router() http.Handler {
 	// Games
 	r.Post("/games/points_play", h.CreateGame)
 	r.Post("/games/match_play", h.CreateGame)
+
+	r.Post("/games/wolf", h.CreateWolfGame)
+
 	r.Get("/games", h.GetGames)
 	r.Get("/games/{id}", h.GetGame)
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)

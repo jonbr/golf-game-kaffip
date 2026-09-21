@@ -9,11 +9,13 @@ import (
 	"golf-game-kaffip/internal/config"
 	"golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
+	"golf-game-kaffip/internal/domain/wolf"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
 	"log/slog"
 
 	gamedb "golf-game-kaffip/internal/infrastructure/postgres/game"
 	playerdb "golf-game-kaffip/internal/infrastructure/postgres/player"
+	wolfdb "golf-game-kaffip/internal/infrastructure/postgres/wolf"
 	"net/http"
 	"os"
 	"time"
@@ -70,8 +72,9 @@ func Initialize() (*App, error) {
 	// 2. Instantiate repositories
 	// -----------------------------
 	var (
-		playerRepo player.Repository = playerdb.NewRepository(db)
-		gameRepo   game.Repository   = gamedb.NewRepository(db, playerRepo)
+		playerRepo   player.Repository = playerdb.NewRepository(db)
+		gameRepo     game.Repository   = gamedb.NewRepository(db, playerRepo)
+		wolfGameRepo wolf.Repository   = wolfdb.NewWolfRepository(db)
 	)
 
 	// -----------------------------
@@ -79,6 +82,13 @@ func Initialize() (*App, error) {
 	// -----------------------------
 	gameService := application.NewGameService(
 		gameRepo,
+		playerRepo,
+		externalAPI,
+	)
+
+	wolfGameService := application.NewWolfGameService(
+		gameRepo,
+		wolfGameRepo,
 		playerRepo,
 		externalAPI,
 	)
@@ -93,7 +103,7 @@ func Initialize() (*App, error) {
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
+	h := handlers.NewHandler(gameService, wolfGameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
 	//h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
 
 	return &App{
