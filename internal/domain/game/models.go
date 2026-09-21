@@ -12,8 +12,9 @@ type GameType string
 type Variant string
 
 const (
-	GameTypeTeamPlay  GameType = "team_play"
-	GameTypeMatchPlay GameType = "match_play"
+	//GameTypeTeamPlay  GameType = "team_play"
+	GameTypePointsPlay GameType = "points_play"
+	GameTypeMatchPlay  GameType = "match_play"
 )
 
 const (
@@ -117,7 +118,7 @@ func NewGame(
 	// instead, informationally). Team play + net doesn't use it either,
 	// since strokes are already allocated per hole there.
 	startingLead := 0
-	if variant == VariantGross && gameType == GameTypeTeamPlay {
+	if variant == VariantGross && gameType == GameTypePointsPlay {
 		startingLead = computeStartingLead(teamA, teamB)
 	}
 
@@ -147,9 +148,9 @@ func validateGameTypeAndVariant(gameType GameType, variant Variant, teamA, teamB
 	}
 
 	switch gameType {
-	case GameTypeTeamPlay:
+	case GameTypePointsPlay:
 		if len(teamA) != 2 || len(teamB) != 2 {
-			return fmt.Errorf("team play requires exactly two players per side")
+			return fmt.Errorf("points play requires exactly two players per side")
 		}
 	case GameTypeMatchPlay:
 		if len(teamA) != 1 || len(teamB) != 1 {

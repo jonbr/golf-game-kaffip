@@ -33,7 +33,7 @@ func TestNewGame_StartingLeadOnlyAppliesToTeamPlayGross(t *testing.T) {
 	}{
 		{
 			name:        "team play + gross gets a starting lead",
-			gameType:    GameTypeTeamPlay,
+			gameType:    GameTypePointsPlay,
 			variant:     VariantGross,
 			teamA:       teamAHighHandicap2v2,
 			teamB:       teamBLowHandicap2v2,
@@ -41,7 +41,7 @@ func TestNewGame_StartingLeadOnlyAppliesToTeamPlayGross(t *testing.T) {
 		},
 		{
 			name:        "team play + net gets no starting lead",
-			gameType:    GameTypeTeamPlay,
+			gameType:    GameTypePointsPlay,
 			variant:     VariantNet,
 			teamA:       teamAHighHandicap2v2,
 			teamB:       teamBLowHandicap2v2,

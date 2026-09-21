@@ -269,7 +269,7 @@ func fetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.L
 func validateTeamSize(gameType domainGame.GameType, teamA, teamB []int64) error {
 	var want int
 	switch gameType {
-	case domainGame.GameTypeTeamPlay:
+	case domainGame.GameTypePointsPlay:
 		want = 2
 	case domainGame.GameTypeMatchPlay:
 		want = 1

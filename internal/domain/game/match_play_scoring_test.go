@@ -23,7 +23,7 @@ func newTestGame(t *testing.T) *Game {
 	teamA := []*player.Player{{ID: 1, Handicap: 0}, {ID: 2, Handicap: 0}}
 	teamB := []*player.Player{{ID: 3, Handicap: 0}, {ID: 4, Handicap: 0}}
 
-	g, err := NewGame("test-game", c, teamA, teamB, GameTypeTeamPlay, VariantGross)
+	g, err := NewGame("test-game", c, teamA, teamB, GameTypePointsPlay, VariantGross)
 	if err != nil {
 		t.Fatalf("NewGame failed: %v", err)
 	}

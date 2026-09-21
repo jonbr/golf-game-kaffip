@@ -19,7 +19,7 @@ import (
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "create game")
 
-	gameType := domainGame.GameTypeTeamPlay
+	gameType := domainGame.GameTypePointsPlay
 	if strings.HasSuffix(r.URL.Path, "/match_play") {
 		gameType = domainGame.GameTypeMatchPlay
 	}

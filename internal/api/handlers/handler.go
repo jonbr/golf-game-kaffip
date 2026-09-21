@@ -58,7 +58,7 @@ func (h *Handler) Router() http.Handler {
 	r.Delete("/players/{id}", h.DeletePlayer)
 
 	// Games
-	r.Post("/games/team_play", h.CreateGame)
+	r.Post("/games/points_play", h.CreateGame)
 	r.Post("/games/match_play", h.CreateGame)
 	r.Get("/games", h.GetGames)
 	r.Get("/games/{id}", h.GetGame)
