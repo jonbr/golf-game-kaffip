@@ -7,6 +7,7 @@ import (
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
 	domainGame "golf-game-kaffip/internal/domain/game"
+	"path"
 
 	"log/slog"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 )
 
 func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create game")
+	ctx, logger := startRequest(r, "create "+path.Base(r.URL.Path)+" game")
 
 	gameType := domainGame.GameTypePointsPlay
 	if strings.HasSuffix(r.URL.Path, "/match_play") {
@@ -40,7 +41,7 @@ func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
 			return
 		}
-		logger.Error("create game failed", "error", err)
+		logger.Error("create game failed", "path", r.URL.Path, "error", err)
 		api.WriteError(w, err)
 		return
 	}
@@ -70,7 +71,7 @@ func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
 			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
 			return
 		}
-		logger.Error("create wolf game failed", "error", err)
+		logger.Error("create wolf game failed", "path", r.URL.Path, "error", err)
 		api.WriteError(w, err)
 		return
 	}
@@ -118,6 +119,24 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 	// 3. Success
 	api.JSON(w, http.StatusOK, game)
 }
+
+func (h *Handler) GetWolfGame(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := startRequest(r, "get wolf game")
+	id, ok := parseGameID(w, r, logger)
+	if !ok {
+		return
+	}
+	game, err := h.WolfGameService.GetGame(ctx, id)
+	if err != nil {
+		logger.Error("get wolf game failed", "wolf_game_id", id, "error", err)
+		api.WriteError(w, err)
+		return
+	}
+	//api.JSON(w, http.StatusOK, mapWolfGameToResponse(game))
+	api.JSON(w, http.StatusOK, game)
+}
+
+func (h *Handler) GetWolfGames(w http.ResponseWriter, r *http.Request) {}
 
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set hole score")

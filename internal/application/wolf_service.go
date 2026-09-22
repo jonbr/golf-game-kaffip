@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"golf-game-kaffip/internal/api/dto"
 	"golf-game-kaffip/internal/domain/game"
@@ -60,7 +61,7 @@ func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGame
 		return nil, err
 	}
 
-	gameID := fmt.Sprintf("wolf_%d", time.Now().UnixNano())
+	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
 
 	g, err := wolf.NewGame(gameID, course, players)
 	if err != nil {
@@ -71,5 +72,16 @@ func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGame
 		return nil, fmt.Errorf("failed to save wolf game: %w", err)
 	}
 
+	return g, nil
+}
+
+func (s *WolfGameService) GetGame(ctx context.Context, id string) (*wolf.Game, error) {
+	g, err := s.wolfGames.LoadGame(ctx, id)
+	if err != nil {
+		if errors.Is(err, wolf.ErrGameNotFound) {
+			return nil, NewServiceError("wolf_game_not_found", map[string]any{"wolf_game_id": id})
+		}
+		return nil, err
+	}
 	return g, nil
 }

@@ -74,7 +74,7 @@ func Initialize() (*App, error) {
 	var (
 		playerRepo   player.Repository = playerdb.NewRepository(db)
 		gameRepo     game.Repository   = gamedb.NewRepository(db, playerRepo)
-		wolfGameRepo wolf.Repository   = wolfdb.NewRepository(db)
+		wolfGameRepo wolf.Repository   = wolfdb.NewRepository(db, playerRepo)
 	)
 
 	// -----------------------------
