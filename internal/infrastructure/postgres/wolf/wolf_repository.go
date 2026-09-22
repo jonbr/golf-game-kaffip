@@ -135,6 +135,7 @@ func (r *WolfRepository) LoadGame(ctx context.Context, id string) (*domainWolf.G
 
 	return &domainWolf.Game{
 		ID:          id,
+		GameType:    "wolf",
 		Course:      c,
 		Players:     players,
 		CurrentHole: currentHole,

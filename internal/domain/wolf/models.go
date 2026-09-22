@@ -22,6 +22,7 @@ const (
 
 type Game struct {
 	ID          string
+	GameType    string // always "wolf", included for response consistency with other game types
 	Course      *course.Course
 	Players     [4]*player.Player
 	CurrentHole int

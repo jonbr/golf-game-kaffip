@@ -42,7 +42,7 @@ func (r *PlayerRepository) GetTeamsForGame(
 
 	for rows.Next() {
 		var pid int64
-		var team string
+		var team *string
 
 		if err := rows.Scan(&pid, &team); err != nil {
 			return nil, nil, err
@@ -53,7 +53,11 @@ func (r *PlayerRepository) GetTeamsForGame(
 			return nil, nil, err
 		}
 
-		if team == "A" {
+		if team == nil {
+			continue // wolf/other non-two-sided rows: no team assignment, skip
+		}
+
+		if *team == "A" {
 			teamA = append(teamA, p)
 		} else {
 			teamB = append(teamB, p)

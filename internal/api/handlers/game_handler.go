@@ -136,7 +136,7 @@ func (h *Handler) GetWolfGame(w http.ResponseWriter, r *http.Request) {
 	api.JSON(w, http.StatusOK, game)
 }
 
-func (h *Handler) GetWolfGames(w http.ResponseWriter, r *http.Request) {}
+//func (h *Handler) GetWolfGames(w http.ResponseWriter, r *http.Request) {}
 
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set hole score")
