@@ -67,6 +67,7 @@ func (h *Handler) Router() http.Handler {
 
 	r.Post("/games/wolf", h.CreateWolfGame)
 	r.Get("/games/wolf/{id}", h.GetWolfGame)
+	r.Put("/games/wolf/{id}/holes/{holeNumber}/score", h.SetWolfHoleScore)
 
 	r.Get("/games", h.GetGames)
 	r.Get("/games/{id}", h.GetGame)

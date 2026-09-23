@@ -128,3 +128,60 @@ CREATE TABLE hole_result_scores (
         REFERENCES players(id)
         ON DELETE RESTRICT
 );
+
+-- ============================
+-- Wolf Hole Results
+-- One row per wolf game + hole, upserted on correction. Not part of the
+-- shared hole_results table since Wolf's shape (individual players,
+-- rotating mode/partner) doesn't fit the two-sided points_a/points_b
+-- columns used by points_play/match_play.
+-- ============================
+CREATE TABLE wolf_hole_results (
+    id             BIGSERIAL PRIMARY KEY,
+    game_id        TEXT NOT NULL,
+    hole_number    INTEGER NOT NULL,
+    wolf_player_id BIGINT NOT NULL,
+    mode           TEXT NOT NULL CHECK (mode IN ('partnered', 'lone')),
+    partner_id     BIGINT NULL,
+    winning_side   TEXT NULL CHECK (winning_side IN ('wolf', 'field')),
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    UNIQUE (game_id, hole_number),
+
+    FOREIGN KEY (game_id)
+        REFERENCES games(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (wolf_player_id)
+        REFERENCES players(id)
+        ON DELETE RESTRICT,
+
+    FOREIGN KEY (partner_id)
+        REFERENCES players(id)
+        ON DELETE RESTRICT
+);
+
+-- ============================
+-- Wolf Hole Scores
+-- All 4 players' scores + points for a given wolf hole result.
+-- ============================
+CREATE TABLE wolf_hole_scores (
+    id                  BIGSERIAL PRIMARY KEY,
+    wolf_hole_result_id BIGINT NOT NULL,
+    player_id           BIGINT NOT NULL,
+    gross               INTEGER NOT NULL,
+    net                 INTEGER NOT NULL,
+    strokes             INTEGER NOT NULL,
+    points              INTEGER NOT NULL DEFAULT 0,
+
+    UNIQUE (wolf_hole_result_id, player_id),
+
+    FOREIGN KEY (wolf_hole_result_id)
+        REFERENCES wolf_hole_results(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (player_id)
+        REFERENCES players(id)
+        ON DELETE RESTRICT
+);

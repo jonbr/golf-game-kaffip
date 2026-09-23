@@ -59,7 +59,34 @@ func (h *Handler) GetWolfGame(w http.ResponseWriter, r *http.Request) {
 	api.JSON(w, http.StatusOK, mapWolfGameToResponse(game))
 }
 
-func (h *Handler) SetWolfHoleScore(w http.ResponseWriter, r *http.Request) {}
+func (h *Handler) SetWolfHoleScore(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := startRequest(r, "set wolf hole score")
+
+	gameID, ok := parseGameID(w, r, logger)
+	if !ok {
+		return
+	}
+	holeNumber, ok := parseHoleNumber(w, r, logger)
+	if !ok {
+		return
+	}
+
+	var req dto.SetWolfHoleScoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Error("invalid JSON", "error", err)
+		api.WriteBadRequest(w, "invalid_input", "invalid JSON payload", nil)
+		return
+	}
+
+	game, err := h.WolfGameService.SetHoleScore(ctx, gameID, holeNumber, req)
+	if err != nil {
+		logger.Error("set wolf hole score failed", "wolf_game_id", gameID, "hole_number", holeNumber, "error", err)
+		api.WriteError(w, err)
+		return
+	}
+
+	api.JSON(w, http.StatusOK, mapWolfGameToResponse(game))
+}
 
 func mapWolfPlayersToRoles(players [4]*player.Player) []dto.PlayerRoleResponse {
 	roles := make([]dto.PlayerRoleResponse, 0, 4)

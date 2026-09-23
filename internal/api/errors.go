@@ -39,6 +39,10 @@ var serviceErrorStatus = map[string]int{
 	"team_event_not_found":          http.StatusNotFound,
 	"invalid_event":                 http.StatusBadRequest,
 	"duplicate_player_in_event":     http.StatusBadRequest,
+	"wolf_game_not_found":           http.StatusNotFound,
+	"invalid_score_count":           http.StatusBadRequest,
+	"invalid_wolf_mode":             http.StatusBadRequest,
+	"invalid_wolf_hole_score":       http.StatusBadRequest,
 }
 
 func StatusCode(err error) int {

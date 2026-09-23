@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS wolf_hole_scores;
+DROP TABLE IF EXISTS wolf_hole_results;
 DROP TABLE IF EXISTS hole_result_scores;
 DROP TABLE IF EXISTS hole_results;
 DROP TABLE IF EXISTS game_course_holes;

@@ -15,7 +15,7 @@ Content-Type: application/json
 {
   "name": "Player-new-4",
   "email": "player4@example.com",
-  "handicap": 24.4
+  "handicap": 11.7
 }
 
 
@@ -87,12 +87,12 @@ GET {{baseUrl}}/games?status=active
 ### ---------------------------------------
 ### Get Game
 ### ---------------------------------------
-GET {{baseUrl}}/games/game_1790095626502025000
+GET {{baseUrl}}/games/game_1790161494601174000
 
 ### ---------------------------------------
 ### Get Wolf Game
 ### ---------------------------------------
-GET {{baseUrl}}/games/wolf/game_1790094249508071000
+GET {{baseUrl}}/games/wolf/game_1790161494601174000
 
 
 ### ---------------------------------------
@@ -110,6 +110,28 @@ Content-Type: application/json
     { "player_id": 2, "gross": 4 },
     { "player_id": 3, "gross": 5 },
     { "player_id": 4, "gross": 4 }
+  ]
+}
+
+
+### ---------------------------------------
+### Submit Hole Score Wolf
+### Must target holeNumber <= CurrentHole. Scoring the current hole
+### advances CurrentHole by one; scoring any earlier hole is treated
+### as a correction and does not move CurrentHole.
+### ---------------------------------------
+PUT {{baseUrl}}/games/wolf/game_1790161494601174000/holes/4/score
+Content-Type: application/json
+
+{
+  "wolf_player_id": 4,
+  "mode": "partnered",
+  "partner_id": 3,
+  "scores": [
+    { "player_id": 1, "gross": 5 },
+    { "player_id": 2, "gross": 5 },
+    { "player_id": 3, "gross": 3 },
+    { "player_id": 4, "gross": 6 }
   ]
 }
 
@@ -136,7 +158,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1790094922747438000/finish
+POST {{baseUrl}}/games/game_1790095626502025000/finish
 
 
 ### ---------------------------------------

@@ -85,3 +85,47 @@ func (s *WolfGameService) GetGame(ctx context.Context, id string) (*wolf.Game, e
 	}
 	return g, nil
 }
+
+func (s *WolfGameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, req dto.SetWolfHoleScoreRequest) (*wolf.Game, error) {
+	logger := logging.FromCtx(ctx)
+
+	g, err := s.wolfGames.LoadGame(ctx, gameID)
+	if err != nil {
+		if errors.Is(err, wolf.ErrGameNotFound) {
+			return nil, NewServiceError("wolf_game_not_found", map[string]any{"wolf_game_id": gameID})
+		}
+		return nil, err
+	}
+
+	if len(req.Scores) != 4 {
+		return nil, NewServiceError("invalid_score_count", map[string]any{
+			"expected": 4,
+			"got":      len(req.Scores),
+		})
+	}
+
+	mode := wolf.WolfMode(req.Mode)
+	if mode != wolf.WolfModePartnered && mode != wolf.WolfModeLone {
+		return nil, NewServiceError("invalid_wolf_mode", map[string]any{"mode": req.Mode})
+	}
+
+	inputs := make([]wolf.PlayerScoreInput, 0, 4)
+	for _, s := range req.Scores {
+		inputs = append(inputs, wolf.PlayerScoreInput{PlayerID: s.PlayerID, Gross: s.Gross})
+	}
+
+	if err := g.SetHoleScore(holeNumber, req.WolfPlayerID, mode, req.PartnerID, inputs); err != nil {
+		logger.Error("failed to set wolf hole score", "wolf_game_id", gameID, "hole_number", holeNumber, "error", err)
+		return nil, NewServiceError("invalid_wolf_hole_score", map[string]any{
+			"wolf_game_id": gameID,
+			"hole_number":  holeNumber,
+			"underlying":   err.Error(),
+		})
+	}
+
+	if err := s.wolfGames.SaveHoleResult(ctx, g, holeNumber); err != nil {
+		return nil, fmt.Errorf("failed to persist wolf hole %d result: %w", holeNumber, err)
+	}
+
+	return g, nil
+}
