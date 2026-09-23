@@ -33,7 +33,7 @@ func (h *Handler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. Build response DTO and send
-	api.JSON(w, http.StatusCreated, dto.CreatePlayerResponse{
+	api.JSON(w, http.StatusCreated, dto.PlayerResponse{
 		ID:       p.ID,
 		Name:     p.Name,
 		Email:    p.Email,

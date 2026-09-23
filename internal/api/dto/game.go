@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type CreateGameRequest struct {
 	CourseID string  `json:"course_id"`
 	TeamA    []int64 `json:"team_a"`
@@ -11,11 +13,24 @@ type CreateGameResponse struct {
 	GameID string `json:"game_id"`
 }
 
-type SubmitHoleScoreRequest struct {
+type GameResponse struct {
+	ID           string                        `json:"id"`
+	GameType     string                        `json:"game_type"`
+	Variant      string                        `json:"variant"`
+	Course       CourseSummaryResponse         `json:"course"`
+	Players      []PlayerRoleResponse          `json:"players"`
+	CurrentHole  int                           `json:"current_hole"`
+	StartingLead int                           `json:"starting_lead"`
+	MatchScore   MatchScoreResponse            `json:"match_score"`
+	HoleResults  map[string]HoleResultResponse `json:"hole_results"`
+	FinishedAt   *time.Time                    `json:"finished_at"`
+}
+
+/*type SubmitHoleScoreRequest struct {
 	GameID string             `json:"-"` // injected from URL
 	Hole   int                `json:"hole" binding:"required"`
 	Scores []PlayerGrossScore `json:"scores" binding:"required,dive"`
-}
+}*/
 
 type SetHoleScoreRequest struct {
 	Scores []PlayerGrossScore `json:"scores"`
@@ -26,7 +41,7 @@ type PlayerGrossScore struct {
 	Gross    int   `json:"gross" binding:"required"`
 }
 
-type GameStateResponse struct {
+/*type GameStateResponse struct {
 	GameID      string              `json:"game_id"`
 	Course      CourseResponse      `json:"course"`
 	Teams       TeamsResponse       `json:"teams"`
@@ -56,12 +71,12 @@ type PlayerResponse struct {
 	ID       string  `json:"id"`
 	Name     string  `json:"name"`
 	Handicap float64 `json:"handicap"`
-}
+}*/
 
 type PlayerScoreResponse struct {
-	PlayerID string `json:"player_id"`
-	Gross    int    `json:"gross"`
-	Net      int    `json:"net"`
+	PlayerID int64 `json:"player_id"`
+	Gross    int   `json:"gross"`
+	Net      int   `json:"net"`
 }
 
 type HoleResultResponse struct {
@@ -84,7 +99,7 @@ type MatchScoreResponse struct {
 }
 
 type GrossBonusResponse struct {
-	PlayerID string `json:"player_id"`
+	PlayerID int64  `json:"player_id"`
 	TeamID   string `json:"team_id"`
 	Bonus    int    `json:"bonus"`
 }

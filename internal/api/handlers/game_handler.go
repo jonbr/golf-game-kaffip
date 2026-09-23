@@ -7,6 +7,7 @@ import (
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
 	domainGame "golf-game-kaffip/internal/domain/game"
+	"golf-game-kaffip/internal/domain/player"
 	"path"
 
 	"log/slog"
@@ -52,36 +53,6 @@ func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create wolf game")
-
-	// 1. Bind JSON
-	var req dto.CreateWolfGameRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("invalid JSON", "error", err)
-		api.WriteBadRequest(w, "invalid_input", "invalid JSON payload", nil)
-		return
-	}
-
-	// 2. Execute service
-	game, err := h.WolfGameService.CreateGame(ctx, req)
-	if err != nil {
-		if errors.Is(err, domainCourse.ErrCourseNotFound) {
-			logger.Info("create wolf game failed: course not found", "course_id", req.CourseID)
-			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
-			return
-		}
-		logger.Error("create wolf game failed", "path", r.URL.Path, "error", err)
-		api.WriteError(w, err)
-		return
-	}
-
-	// 3. Send response
-	api.JSON(w, http.StatusCreated, dto.CreateWolfGameResponse{
-		GameID: game.ID,
-	})
-}
-
 func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get games")
 
@@ -108,7 +79,6 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Excecute service
 	game, err := h.GameService.GetGame(ctx, gameID)
 	if err != nil {
 		logger.Error("get game failed", "game_id", gameID, "error", err)
@@ -116,27 +86,8 @@ func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Success
-	api.JSON(w, http.StatusOK, game)
+	api.JSON(w, http.StatusOK, mapGameToResponse(game))
 }
-
-func (h *Handler) GetWolfGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get wolf game")
-	id, ok := parseGameID(w, r, logger)
-	if !ok {
-		return
-	}
-	game, err := h.WolfGameService.GetGame(ctx, id)
-	if err != nil {
-		logger.Error("get wolf game failed", "wolf_game_id", id, "error", err)
-		api.WriteError(w, err)
-		return
-	}
-	//api.JSON(w, http.StatusOK, mapWolfGameToResponse(game))
-	api.JSON(w, http.StatusOK, game)
-}
-
-//func (h *Handler) GetWolfGames(w http.ResponseWriter, r *http.Request) {}
 
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set hole score")
@@ -188,16 +139,6 @@ func (h *Handler) FinishGame(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func parseGameID(w http.ResponseWriter, r *http.Request, logger *slog.Logger) (string, bool) {
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		logger.Error("missing game id")
-		api.WriteBadRequest(w, "missing_game_id", "game id must be set", nil)
-		return "", false
-	}
-	return id, true
-}
-
 // parseHoleNumber extracts and validates the holeNumber path parameter.
 // On failure it writes a 400 response itself and returns ok=false.
 func parseHoleNumber(w http.ResponseWriter, r *http.Request, logger *slog.Logger) (int, bool) {
@@ -209,4 +150,64 @@ func parseHoleNumber(w http.ResponseWriter, r *http.Request, logger *slog.Logger
 		return 0, false
 	}
 	return holeNumber, true
+}
+
+func mapTeamPlayersToRoles(teamA, teamB []*player.Player) []dto.PlayerRoleResponse {
+	teamLabelA := "A"
+	teamLabelB := "B"
+
+	roles := make([]dto.PlayerRoleResponse, 0, len(teamA)+len(teamB))
+	for _, p := range teamA {
+		roles = append(roles, dto.PlayerRoleResponse{
+			PlayerID: p.ID, Team: &teamLabelA, Name: p.Name, Email: p.Email, Handicap: p.Handicap,
+		})
+	}
+	for _, p := range teamB {
+		roles = append(roles, dto.PlayerRoleResponse{
+			PlayerID: p.ID, Team: &teamLabelB, Name: p.Name, Email: p.Email, Handicap: p.Handicap,
+		})
+	}
+	return roles
+}
+
+func mapGameToResponse(g *domainGame.Game) dto.GameResponse {
+	holeResultsResp := make(map[string]dto.HoleResultResponse, len(g.HoleResults))
+	for holeNum, hr := range g.HoleResults {
+		scores := make([]dto.PlayerScoreResponse, 0, len(hr.Scores))
+		for _, s := range hr.Scores {
+			scores = append(scores, dto.PlayerScoreResponse{
+				PlayerID: s.PlayerID,
+				Gross:    s.Gross,
+				Net:      s.Net,
+			})
+		}
+
+		grossBonuses := make([]dto.GrossBonusResponse, 0, len(hr.GrossBonuses))
+		for _, gb := range hr.GrossBonuses {
+			grossBonuses = append(grossBonuses, dto.GrossBonusResponse{
+				PlayerID: gb.PlayerID,
+				Bonus:    gb.Bonus,
+			})
+		}
+
+		holeResultsResp[strconv.Itoa(holeNum)] = dto.HoleResultResponse{
+			LowScoreWinnerTeam:  hr.LowScoreWinnerTeam,
+			TeamTotalWinnerTeam: hr.TeamTotalWinnerTeam,
+			Scores:              scores,
+			GrossBonuses:        grossBonuses,
+		}
+	}
+
+	return dto.GameResponse{
+		ID:           g.ID,
+		GameType:     string(g.GameType),
+		Variant:      string(g.Variant),
+		Course:       dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
+		Players:      mapTeamPlayersToRoles(g.TeamA, g.TeamB),
+		CurrentHole:  g.CurrentHole,
+		StartingLead: g.StartingLead,
+		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
+		HoleResults:  holeResultsResp,
+		FinishedAt:   g.FinishedAt,
+	}
 }

@@ -11,17 +11,17 @@ type CreateWolfGameResponse struct {
 	GameID string `json:"game_id"`
 }
 
-type SetWolfHoleScoreRequest struct {
+/*type SetWolfHoleScoreRequest struct {
 	Mode      string             `json:"mode"` // "partnered" or "lone"
 	PartnerID *int64             `json:"partner_id,omitempty"`
 	Scores    []PlayerGrossScore `json:"scores"` // all 4 players
-}
+}*/
 
 type WolfGameResponse struct {
 	ID                  string                            `json:"id"`
 	Course              CourseSummaryResponse             `json:"course"`
-	Players             []PlayerSummaryResponse           `json:"players"`
-	CurrentHolse        int                               `json:"current_hole"`
+	Players             []PlayerRoleResponse              `json:"players"` // was []PlayerSummaryResponse
+	CurrentHole         int                               `json:"current_hole"`
 	CurrentWolfPlayerID int64                             `json:"current_wolf_player_id"`
 	Standings           []WolfStandingResponse            `json:"standings"`
 	HoleResults         map[string]WolfHoleResultResponse `json:"hole_results"`

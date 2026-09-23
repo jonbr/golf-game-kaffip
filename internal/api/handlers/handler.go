@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/middleware"
 	"golf-game-kaffip/internal/application"
 	"golf-game-kaffip/internal/logging"
@@ -65,10 +66,10 @@ func (h *Handler) Router() http.Handler {
 	r.Post("/games/match_play", h.CreateGame)
 
 	r.Post("/games/wolf", h.CreateWolfGame)
+	r.Get("/games/wolf/{id}", h.GetWolfGame)
 
 	r.Get("/games", h.GetGames)
 	r.Get("/games/{id}", h.GetGame)
-	r.Get("/games/wolf/{id}", h.GetWolfGame)
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 	r.Post("/games/{id}/finish", h.FinishGame)
 
@@ -91,4 +92,14 @@ func startRequest(r *http.Request, action string) (context.Context, *slog.Logger
 	logger := logging.FromCtx(ctx)
 	logger.Info(action)
 	return ctx, logger
+}
+
+func parseGameID(w http.ResponseWriter, r *http.Request, logger *slog.Logger) (string, bool) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		logger.Error("missing game id")
+		api.WriteBadRequest(w, "missing_game_id", "game id must be set", nil)
+		return "", false
+	}
+	return id, true
 }

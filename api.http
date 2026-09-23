@@ -54,13 +54,13 @@ DELETE {{baseUrl}}/players/1
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
-POST {{baseUrl}}/games/match_play
+POST {{baseUrl}}/games/points_play
 Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
-  "team_a": [3],
-  "team_b": [4],
+  "team_a": [3,2],
+  "team_b": [4,1],
   "variant": "gross"
 }
 
@@ -82,17 +82,17 @@ Content-Type: application/json
 ### Get Games
 ### optional ?status=active|finished
 ### ---------------------------------------
-GET {{baseUrl}}/games
+GET {{baseUrl}}/games?status=active
 
 ### ---------------------------------------
 ### Get Game
 ### ---------------------------------------
-GET {{baseUrl}}/games/game_1790089572262136000
+GET {{baseUrl}}/games/game_1790095626502025000
 
 ### ---------------------------------------
 ### Get Wolf Game
 ### ---------------------------------------
-GET {{baseUrl}}/games/wolf/game_1790091520774616000
+GET {{baseUrl}}/games/wolf/game_1790094249508071000
 
 
 ### ---------------------------------------
@@ -136,7 +136,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1790091477506072000/finish
+POST {{baseUrl}}/games/game_1790094922747438000/finish
 
 
 ### ---------------------------------------
