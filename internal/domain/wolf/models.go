@@ -8,13 +8,12 @@ import (
 )
 
 type WolfMode string
+type WolfSide string
 
 const (
 	WolfModePartnered WolfMode = "partnered"
 	WolfModeLone      WolfMode = "lone"
 )
-
-type WolfSide string
 
 const (
 	WolfSideWolf  WolfSide = "wolf"
@@ -23,7 +22,7 @@ const (
 
 type Game struct {
 	ID          string
-	GameType    string // always "wolf", included for response consistency with other game types
+	GameType    game.GameType // always game.GameTypeWolf
 	Course      *course.Course
 	Players     [4]*player.Player
 	CurrentHole int
@@ -61,7 +60,7 @@ type PlayerScoreInput struct {
 	Gross    int
 }
 
-func NewGame(id string, c *course.Course, players [4]*player.Player, gameType game.GameType) (*Game, error) {
+func NewGame(id string, c *course.Course, players [4]*player.Player) (*Game, error) {
 	if id == "" {
 		return nil, errEmptyID
 	}
@@ -73,6 +72,7 @@ func NewGame(id string, c *course.Course, players [4]*player.Player, gameType ga
 
 	return &Game{
 		ID:          id,
+		GameType:    game.GameTypeWolf,
 		Course:      c,
 		Players:     players,
 		CurrentHole: 1,

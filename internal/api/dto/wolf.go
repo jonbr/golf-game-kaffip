@@ -7,10 +7,6 @@ type CreateWolfGameRequest struct {
 	PlayerIDs []int64 `json:"players"`
 }
 
-type CreateWolfGameResponse struct {
-	GameID string `json:"game_id"`
-}
-
 type SetWolfHoleScoreRequest struct {
 	WolfPlayerID int64              `json:"wolf_player_id"`
 	Mode         string             `json:"mode"` // "partnered" or "lone"

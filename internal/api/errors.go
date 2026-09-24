@@ -43,6 +43,7 @@ var serviceErrorStatus = map[string]int{
 	"invalid_score_count":           http.StatusBadRequest,
 	"invalid_wolf_mode":             http.StatusBadRequest,
 	"invalid_wolf_hole_score":       http.StatusBadRequest,
+	"wrong_game_type":               http.StatusBadRequest,
 }
 
 func StatusCode(err error) int {

@@ -79,11 +79,11 @@ func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	switch gameType {
 	case domainGame.GameTypeMatchPlay:
 		game, err := h.MatchPlayService.SetHoleScore(ctx, gameID, holeNumber, req)
-		respond(err, func() any { return mapGameToResponse(game) })
+		respond(err, func() any { return mapMatchPlayToResponse(game) })
 
 	case domainGame.GameTypeTeamPoints:
 		game, err := h.TeamPointsService.SetHoleScore(ctx, gameID, holeNumber, req)
-		respond(err, func() any { return mapGameToResponse(game) })
+		respond(err, func() any { return mapTeamPointsToResponse(game) })
 
 	case domainGame.GameTypeWolf:
 		wolfReq := dto.SetWolfHoleScoreRequest{
@@ -148,48 +148,6 @@ func mapTeamPlayersToRoles(teamA, teamB []*player.Player) []dto.PlayerRoleRespon
 		})
 	}
 	return roles
-}
-
-func mapGameToResponse(g *domainGame.Game) dto.GameResponse {
-	holeResultsResp := make(map[string]dto.HoleResultResponse, len(g.HoleResults))
-	for holeNum, hr := range g.HoleResults {
-		scores := make([]dto.PlayerScoreResponse, 0, len(hr.Scores))
-		for _, s := range hr.Scores {
-			scores = append(scores, dto.PlayerScoreResponse{
-				PlayerID: s.PlayerID,
-				Gross:    s.Gross,
-				Net:      s.Net,
-			})
-		}
-
-		grossBonuses := make([]dto.GrossBonusResponse, 0, len(hr.GrossBonuses))
-		for _, gb := range hr.GrossBonuses {
-			grossBonuses = append(grossBonuses, dto.GrossBonusResponse{
-				PlayerID: gb.PlayerID,
-				Bonus:    gb.Bonus,
-			})
-		}
-
-		holeResultsResp[strconv.Itoa(holeNum)] = dto.HoleResultResponse{
-			LowScoreWinnerTeam:  hr.LowScoreWinnerTeam,
-			TeamTotalWinnerTeam: hr.TeamTotalWinnerTeam,
-			Scores:              scores,
-			GrossBonuses:        grossBonuses,
-		}
-	}
-
-	return dto.GameResponse{
-		ID:           g.ID,
-		GameType:     string(g.GameType),
-		Variant:      string(g.Variant),
-		Course:       dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
-		Players:      mapTeamPlayersToRoles(g.TeamA, g.TeamB),
-		CurrentHole:  g.CurrentHole,
-		StartingLead: g.StartingLead,
-		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
-		HoleResults:  holeResultsResp,
-		FinishedAt:   g.FinishedAt,
-	}
 }
 
 func mapGameSummaryToResponse(g *domainGame.GameSummary) dto.GameSummaryResponse {

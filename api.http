@@ -100,14 +100,11 @@ Content-Type: application/json
 GET {{baseUrl}}/games?status=all
 
 ### ---------------------------------------
-### Get Game
+### Get Game team_points | match_play | wolf
 ### ---------------------------------------
-GET {{baseUrl}}/games/game_1790161494601174000
-
-### ---------------------------------------
-### Get Wolf Game
-### ---------------------------------------
-GET {{baseUrl}}/games/wolf/game_1790161494601174000
+//GET {{baseUrl}}/games/team_points/game_1790180465322860000
+GET {{baseUrl}}/games/match_play/game_1790180465322860000
+//GET {{baseUrl}}/games/wolf/game_1790244731801360000
 
 
 ### ---------------------------------------

@@ -36,7 +36,7 @@ func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.JSON(w, http.StatusCreated, dto.CreateWolfGameResponse{
+	api.JSON(w, http.StatusCreated, dto.CreateGameResponse{
 		GameID: game.ID,
 	})
 }
@@ -53,6 +53,13 @@ func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("get wolf game failed", "wolf_game_id", id, "error", err)
 		api.WriteError(w, err)
+		return
+	}
+
+	if game.GameType != domainGame.GameTypeWolf {
+		api.WriteBadRequest(w, "wrong_game_type", "this game is not a wolf game", map[string]any{
+			"game_id": game.ID, "actual_type": game.GameType,
+		})
 		return
 	}
 

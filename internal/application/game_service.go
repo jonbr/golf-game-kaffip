@@ -70,35 +70,6 @@ func (s *GameService) SearchCourses(ctx context.Context, query string) ([]opengo
 	return results, nil
 }
 
-/*func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
-	logger := logging.FromCtx(ctx)
-
-	g, err := s.games.LoadGame(ctx, gameID)
-	if err != nil {
-		return nil, NewServiceError("game_not_found", map[string]any{"game_id": gameID})
-	}
-
-	inputs, err := buildScoreInputs(g, scores)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := g.SetHoleScore(holeNumber, inputs); err != nil {
-		logger.Error("failed to set hole score", "game_id", gameID, "hole_number", holeNumber, "error", err)
-		return nil, NewServiceError("invalid_hole_score", map[string]any{
-			"game_id":     gameID,
-			"hole_number": holeNumber,
-			"underlying":  err.Error(),
-		})
-	}
-
-	if err := s.games.SaveHoleResult(ctx, g, holeNumber); err != nil {
-		return nil, fmt.Errorf("failed to persist hole %d result: %w", holeNumber, err)
-	}
-
-	return g, nil
-}*/
-
 func (s *GameService) FinishGame(ctx context.Context, id string) error {
 	// cheap existence check, also confirms row exists
 	if _, err := s.games.GetGameType(ctx, id); err != nil {

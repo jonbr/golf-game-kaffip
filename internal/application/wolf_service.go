@@ -64,7 +64,7 @@ func (s *WolfGameService) CreateGame(ctx context.Context, gameType domainGame.Ga
 
 	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
 
-	g, err := wolf.NewGame(gameID, course, players, domainGame.GameType(gameType))
+	g, err := wolf.NewGame(gameID, course, players)
 	if err != nil {
 		return nil, NewServiceError("invalid_wolf_game", map[string]any{"underlying": err.Error()})
 	}
