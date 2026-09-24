@@ -99,17 +99,16 @@ func (s *GameService) SearchCourses(ctx context.Context, query string) ([]opengo
 	return g, nil
 }*/
 
-func (s *GameService) FinishGame(ctx context.Context, gameID string) error {
-	g, err := s.GetGame(ctx, gameID)
-	if err != nil {
+func (s *GameService) FinishGame(ctx context.Context, id string) error {
+	// cheap existence check, also confirms row exists
+	if _, err := s.games.GetGameType(ctx, id); err != nil {
+		if errors.Is(err, domainGame.ErrGameNotFound) {
+			return NewServiceError("game_not_found", map[string]any{"game_id": id})
+		}
 		return err
 	}
 
-	if g.FinishedAt != nil {
-		return NewServiceError("game_already_finished", map[string]any{"game_id": gameID})
-	}
-
-	return s.games.FinishGame(ctx, gameID)
+	return s.games.FinishGame(ctx, id)
 }
 
 // buildScoreInputs validates that scores are provided for exactly the

@@ -158,7 +158,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1790180357147037000/finish
+POST {{baseUrl}}/games/game_1790180465322860000/finish
 
 
 ### ---------------------------------------
