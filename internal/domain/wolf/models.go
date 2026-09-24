@@ -2,6 +2,7 @@ package wolf
 
 import (
 	"golf-game-kaffip/internal/domain/course"
+	"golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"time"
 )
@@ -60,7 +61,7 @@ type PlayerScoreInput struct {
 	Gross    int
 }
 
-func NewGame(id string, c *course.Course, players [4]*player.Player) (*Game, error) {
+func NewGame(id string, c *course.Course, players [4]*player.Player, gameType game.GameType) (*Game, error) {
 	if id == "" {
 		return nil, errEmptyID
 	}

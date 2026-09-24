@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"path"
 	"strconv"
 
 	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
+	domainGame "golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	domainWolf "golf-game-kaffip/internal/domain/wolf"
 )
 
-func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create "+path.Base(r.URL.Path)+" game")
+func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := startRequest(r, "create wolf game")
 
 	var req dto.CreateWolfGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -24,7 +24,7 @@ func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game, err := h.WolfGameService.CreateGame(ctx, req)
+	game, err := h.WolfGameService.CreateGame(ctx, domainGame.GameTypeWolf, req)
 	if err != nil {
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
 			logger.Info("create wolf game failed: course not found", "course_id", req.CourseID)
@@ -41,7 +41,7 @@ func (h *Handler) CreateWolfGame(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) GetWolfGame(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get wolf game")
 
 	id, ok := parseGameID(w, r, logger)

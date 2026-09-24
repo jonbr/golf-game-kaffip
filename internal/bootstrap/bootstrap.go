@@ -86,6 +86,18 @@ func Initialize() (*App, error) {
 		externalAPI,
 	)
 
+	matchPlayService := application.NewMatchPlayService(
+		gameRepo,
+		playerRepo,
+		externalAPI,
+	)
+
+	teamPointsService := application.NewTeamPointsService(
+		gameRepo,
+		playerRepo,
+		externalAPI,
+	)
+
 	wolfGameService := application.NewWolfGameService(
 		gameRepo,
 		wolfGameRepo,
@@ -103,7 +115,7 @@ func Initialize() (*App, error) {
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, wolfGameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
+	h := handlers.NewHandler(gameService, matchPlayService, teamPointsService, wolfGameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
 	//h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
 
 	return &App{

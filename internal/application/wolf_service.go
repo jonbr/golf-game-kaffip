@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golf-game-kaffip/internal/api/dto"
 	"golf-game-kaffip/internal/domain/game"
+	domainGame "golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"golf-game-kaffip/internal/domain/wolf"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
@@ -34,7 +35,7 @@ func NewWolfGameService(
 	}
 }
 
-func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGameRequest) (*wolf.Game, error) {
+func (s *WolfGameService) CreateGame(ctx context.Context, gameType domainGame.GameType, req dto.CreateWolfGameRequest) (*wolf.Game, error) {
 	logger := logging.FromCtx(ctx)
 
 	if len(req.PlayerIDs) != 4 {
@@ -63,7 +64,7 @@ func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGame
 
 	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
 
-	g, err := wolf.NewGame(gameID, course, players)
+	g, err := wolf.NewGame(gameID, course, players, domainGame.GameType(gameType))
 	if err != nil {
 		return nil, NewServiceError("invalid_wolf_game", map[string]any{"underlying": err.Error()})
 	}

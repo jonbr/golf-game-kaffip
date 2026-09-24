@@ -2,14 +2,13 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"golf-game-kaffip/internal/api/dto"
 	"golf-game-kaffip/internal/domain/game"
 	domainGame "golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
-	"golf-game-kaffip/internal/logging"
-	"time"
 )
 
 type GameService struct {
@@ -28,52 +27,6 @@ func NewGameService(
 		players:               players,
 		externalCourseService: NewExternalCourseService(externalAPI),
 	}
-}
-
-func (s *GameService) CreateGame(ctx context.Context, gameType domainGame.GameType, req dto.CreateGameRequest) (*domainGame.Game, error) {
-	logger := logging.FromCtx(ctx)
-
-	if err := validateTeamSize(gameType, req.TeamA, req.TeamB); err != nil {
-		return nil, err
-	}
-
-	playersIDs := append(req.TeamA, req.TeamB...)
-
-	if err := validatePlayersExist(ctx, s.games, logger, playersIDs); err != nil {
-		return nil, err
-	}
-	if err := validateActiveGameConflict(ctx, s.games, logger, playersIDs); err != nil {
-		return nil, err
-	}
-
-	teamAPlayers, err := loadPlayers(ctx, s.players, req.TeamA)
-	if err != nil {
-		return nil, err
-	}
-	teamBPlayers, err := loadPlayers(ctx, s.players, req.TeamB)
-	if err != nil {
-		return nil, err
-	}
-
-	course, err := fetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
-	if err != nil {
-		return nil, err
-	}
-
-	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
-
-	// 5. Create domain game
-	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.GameType(gameType), domainGame.Variant(req.Variant))
-	if err != nil {
-		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
-	}
-
-	// 4. Persist
-	if err := s.games.CreateGame(ctx, g); err != nil {
-		return nil, fmt.Errorf("failed to save game: %w", err)
-	}
-
-	return g, nil
 }
 
 func (s *GameService) GetGames(ctx context.Context, status string) ([]*domainGame.GameSummary, error) {
@@ -117,7 +70,7 @@ func (s *GameService) SearchCourses(ctx context.Context, query string) ([]opengo
 	return results, nil
 }
 
-func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
+/*func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumber int, scores []dto.PlayerGrossScore) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 
 	g, err := s.games.LoadGame(ctx, gameID)
@@ -144,7 +97,7 @@ func (s *GameService) SetHoleScore(ctx context.Context, gameID string, holeNumbe
 	}
 
 	return g, nil
-}
+}*/
 
 func (s *GameService) FinishGame(ctx context.Context, gameID string) error {
 	g, err := s.GetGame(ctx, gameID)
@@ -210,23 +163,10 @@ func buildScoreInputs(g *domainGame.Game, scores []dto.PlayerGrossScore) ([]doma
 	return inputs, nil
 }
 
-/*func (s *GameService) loadPlayers(ctx context.Context, ids []int64) ([]*player.Player, error) {
-	players := make([]*player.Player, 0, len(ids))
-	for _, id := range ids {
-		p, err := s.players.FindByID(ctx, id, false)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load player with ID %d: %w", id, err)
-		}
-		players = append(players, p)
-	}
-
-	return players, nil
-}*/
-
 func validateTeamSize(gameType domainGame.GameType, teamA, teamB []int64) error {
 	var want int
 	switch gameType {
-	case domainGame.GameTypePointsPlay:
+	case domainGame.GameTypeTeamPoints:
 		want = 2
 	case domainGame.GameTypeMatchPlay:
 		want = 1
@@ -243,4 +183,15 @@ func validateTeamSize(gameType domainGame.GameType, teamA, teamB []int64) error 
 		})
 	}
 	return nil
+}
+
+func (s *GameService) GetGameType(ctx context.Context, id string) (domainGame.GameType, error) {
+	gameType, err := s.games.GetGameType(ctx, id)
+	if err != nil {
+		if errors.Is(err, domainGame.ErrGameNotFound) {
+			return "", NewServiceError("game_not_found", map[string]any{"game_id": id})
+		}
+		return "", err
+	}
+	return gameType, nil
 }

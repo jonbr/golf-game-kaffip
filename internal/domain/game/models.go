@@ -12,8 +12,9 @@ type GameType string
 type Variant string
 
 const (
-	GameTypePointsPlay GameType = "points_play"
+	GameTypeTeamPoints GameType = "team_points"
 	GameTypeMatchPlay  GameType = "match_play"
+	GameTypeWolf       GameType = "wolf"
 )
 
 const (
@@ -35,6 +36,12 @@ type Game struct {
 	StartingLead int // signed: positive favors TeamA, negative favors TeamB
 	MatchScore   MatchScore
 	HoleResults  map[int]*HoleResult
+}
+
+type PlayerScoreInput struct {
+	PlayerID int64
+	Gross    int
+	TeamID   string
 }
 
 // HoleResult is the domain representation of a scored hole.
@@ -117,7 +124,7 @@ func NewGame(
 	// instead, informationally). Team play + net doesn't use it either,
 	// since strokes are already allocated per hole there.
 	startingLead := 0
-	if variant == VariantGross && gameType == GameTypePointsPlay {
+	if variant == VariantGross && gameType == GameTypeTeamPoints {
 		startingLead = computeStartingLead(teamA, teamB)
 	}
 
@@ -147,7 +154,7 @@ func validateGameTypeAndVariant(gameType GameType, variant Variant, teamA, teamB
 	}
 
 	switch gameType {
-	case GameTypePointsPlay:
+	case GameTypeTeamPoints:
 		if len(teamA) != 2 || len(teamB) != 2 {
 			return fmt.Errorf("points play requires exactly two players per side")
 		}

@@ -15,6 +15,8 @@ import (
 
 type Handler struct {
 	GameService        *application.GameService
+	MatchPlayService   *application.MatchPlayService
+	TeamPointsService  *application.TeamPointsService
 	WolfGameService    *application.WolfGameService
 	PlayerService      *application.PlayerService
 	TeamEventService   *application.TeamEventService
@@ -25,6 +27,8 @@ type Handler struct {
 
 func NewHandler(
 	gameService *application.GameService,
+	matchPlayService *application.MatchPlayService,
+	teamPointsService *application.TeamPointsService,
 	wolfGameService *application.WolfGameService,
 	playerService *application.PlayerService,
 	teamEventService *application.TeamEventService,
@@ -34,6 +38,8 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		GameService:        gameService,
+		MatchPlayService:   matchPlayService,
+		TeamPointsService:  teamPointsService,
 		WolfGameService:    wolfGameService,
 		PlayerService:      playerService,
 		TeamEventService:   teamEventService,
@@ -62,16 +68,19 @@ func (h *Handler) Router() http.Handler {
 	r.Delete("/players/{id}", h.DeletePlayer)
 
 	// Games
-	r.Post("/games/points_play", h.CreateGame)
-	r.Post("/games/match_play", h.CreateGame)
+	r.Post("/games/team_points", h.CreateTeamPoints)
+	r.Post("/games/match_play", h.CreateMatchPlay)
+	r.Post("/games/wolf_play", h.CreateWolfPlay)
 
-	r.Post("/games/wolf", h.CreateWolfGame)
-	r.Get("/games/wolf/{id}", h.GetWolfGame)
-	r.Put("/games/wolf/{id}/holes/{holeNumber}/score", h.SetWolfHoleScore)
+	r.Get("/games/wolf/{id}", h.GetWolfPlay)
+
+	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
+	//r.Put("/games/match_play/{id}/holes/{holeNumber}/score", h.SetMatchPlayHoleScore)
+	//r.Put("/games/wolf_play/{id}/holes/{holeNumber}/score", h.SetWolfPlayHoleScore)
 
 	r.Get("/games", h.GetGames)
-	r.Get("/games/{id}", h.GetGame)
-	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
+	//r.Get("/games/{id}", h.GetGame)
+	//r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 	r.Post("/games/{id}/finish", h.FinishGame)
 
 	// Events

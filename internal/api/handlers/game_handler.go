@@ -2,56 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/dto"
-	domainCourse "golf-game-kaffip/internal/domain/course"
 	domainGame "golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
-	"path"
 
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
-
-func (h *Handler) CreateGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create "+path.Base(r.URL.Path)+" game")
-
-	gameType := domainGame.GameTypePointsPlay
-	if strings.HasSuffix(r.URL.Path, "/match_play") {
-		gameType = domainGame.GameTypeMatchPlay
-	}
-
-	// 1. Bind JSON
-	var req dto.CreateGameRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error("invalid JSON", "error", err)
-		api.WriteBadRequest(w, "invalid_input", "invalid JSON payload", nil)
-		return
-	}
-
-	// 2. Execute service
-	game, err := h.GameService.CreateGame(ctx, gameType, req)
-	if err != nil {
-		if errors.Is(err, domainCourse.ErrCourseNotFound) {
-			logger.Info("create game failed: course not found", "course_id", req.CourseID)
-			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
-			return
-		}
-		logger.Error("create game failed", "path", r.URL.Path, "error", err)
-		api.WriteError(w, err)
-		return
-	}
-
-	// 3. Send response
-	api.JSON(w, http.StatusCreated, dto.CreateGameResponse{
-		GameID: game.ID,
-	})
-}
 
 func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get games")
@@ -60,39 +21,26 @@ func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("get games", "status", status)
 
 	// 2. Excecute service
-	game, err := h.GameService.GetGames(ctx, status)
+	summaries, err := h.GameService.GetGames(ctx, status)
 	if err != nil {
 		logger.Error("get games failed", "error", err)
 		api.WriteError(w, err)
 		return
 	}
 
-	// 3. Success
-	api.JSON(w, http.StatusOK, game)
-}
-
-func (h *Handler) GetGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get game")
-
-	gameID, ok := parseGameID(w, r, logger)
-	if !ok {
-		return
+	// 3. Parse response
+	resp := make([]dto.GameSummaryResponse, len(summaries))
+	for i, g := range summaries {
+		resp[i] = mapGameSummaryToResponse(g)
 	}
 
-	game, err := h.GameService.GetGame(ctx, gameID)
-	if err != nil {
-		logger.Error("get game failed", "game_id", gameID, "error", err)
-		api.WriteError(w, err)
-		return
-	}
-
-	api.JSON(w, http.StatusOK, mapGameToResponse(game))
+	// 4. Success
+	api.JSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set hole score")
 
-	// parse query parameters
 	gameID, ok := parseGameID(w, r, logger)
 	if !ok {
 		return
@@ -109,15 +57,47 @@ func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game, err := h.GameService.SetHoleScore(ctx, gameID, holeNumber, req.Scores)
+	gameType, err := h.GameService.GetGameType(ctx, gameID)
 	if err != nil {
-		logger.Error("set hole score failed", "game_id", gameID, "hole_number", holeNumber, "error", err)
+		logger.Error("failed to resolve game type", "game_id", gameID, "error", err)
 		api.WriteError(w, err)
 		return
 	}
 
-	logger.Info("hole score set", "game_id", gameID, "hole_number", holeNumber)
-	api.JSON(w, http.StatusOK, game)
+	// respond handles the shared error-logging/response shape so each
+	// case below only supplies what's actually different: which service
+	// to call and how to map its result.
+	respond := func(err error, mapResponse func() any) {
+		if err != nil {
+			logger.Error("set hole score failed", "game_id", gameID, "hole_number", holeNumber, "error", err)
+			api.WriteError(w, err)
+			return
+		}
+		api.JSON(w, http.StatusOK, mapResponse())
+	}
+
+	switch gameType {
+	case domainGame.GameTypeMatchPlay:
+		game, err := h.MatchPlayService.SetHoleScore(ctx, gameID, holeNumber, req)
+		respond(err, func() any { return mapGameToResponse(game) })
+
+	case domainGame.GameTypeTeamPoints:
+		game, err := h.TeamPointsService.SetHoleScore(ctx, gameID, holeNumber, req)
+		respond(err, func() any { return mapGameToResponse(game) })
+
+	case domainGame.GameTypeWolf:
+		wolfReq := dto.SetWolfHoleScoreRequest{
+			WolfPlayerID: *req.WolfPlayerID,
+			Mode:         *req.Mode,
+			PartnerID:    req.PartnerID,
+			Scores:       req.Scores,
+		}
+		g, err := h.WolfGameService.SetHoleScore(ctx, gameID, holeNumber, wolfReq)
+		respond(err, func() any { return mapWolfGameToResponse(g) })
+
+	default:
+		api.WriteBadRequest(w, "unsupported_game_type", "this game type does not support hole scoring", nil)
+	}
 }
 
 func (h *Handler) FinishGame(w http.ResponseWriter, r *http.Request) {
@@ -209,5 +189,16 @@ func mapGameToResponse(g *domainGame.Game) dto.GameResponse {
 		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
 		HoleResults:  holeResultsResp,
 		FinishedAt:   g.FinishedAt,
+	}
+}
+
+func mapGameSummaryToResponse(g *domainGame.GameSummary) dto.GameSummaryResponse {
+	return dto.GameSummaryResponse{
+		ID:          g.ID,
+		GameType:    string(g.GameType),
+		Course:      dto.CourseSummaryResponse{ID: g.CourseID, Name: g.CourseName},
+		CurrentHole: g.CurrentHole,
+		TotalHoles:  g.TotalHoles,
+		FinishedAt:  g.FinishedAt,
 	}
 }

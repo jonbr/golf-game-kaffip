@@ -361,3 +361,17 @@ func (r *GameRepository) findHoleResultScores(ctx context.Context, resultIDs []i
 	}
 	return scoresByResult, rows.Err()
 }
+
+func (r *GameRepository) GetGameType(ctx context.Context, id string) (domainGame.GameType, error) {
+	var gameType string
+	err := r.db.QueryRow(ctx, `
+        SELECT game_type FROM games WHERE id = $1
+    `, id).Scan(&gameType)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", domainGame.ErrGameNotFound
+		}
+		return "", err
+	}
+	return domainGame.GameType(gameType), nil
+}

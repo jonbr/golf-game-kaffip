@@ -18,6 +18,7 @@ type Repository interface {
 	SaveHoleResult(ctx context.Context, g *Game, holeNumber int) error
 	PlayersInActiveGame(ctx context.Context, playersIDs []int64) (int64, error)
 	PlayerExists(ctx context.Context, id int64) (bool, error)
+	GetGameType(ctx context.Context, id string) (GameType, error) // new
 }
 
 type TeamEventRepository interface {
