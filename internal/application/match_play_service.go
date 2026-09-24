@@ -31,27 +31,19 @@ func NewMatchPlayService(
 	}
 }
 
-func (s *MatchPlayService) CreateGame(ctx context.Context, gameType domainGame.GameType, req dto.CreateMatchPlayRequest) (*domainGame.Game, error) {
+func (s *MatchPlayService) CreateGame(ctx context.Context, req dto.CreateMatchPlayRequest) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 
-	if err := validateTeamSize(gameType, req.TeamA, req.TeamB); err != nil {
+	playerIDs := []int64{req.PlayerA, req.PlayerB}
+
+	if err := validatePlayersExist(ctx, s.games, logger, playerIDs); err != nil {
+		return nil, err
+	}
+	if err := validateActiveGameConflict(ctx, s.games, logger, playerIDs); err != nil {
 		return nil, err
 	}
 
-	playersIDs := append(req.TeamA, req.TeamB...)
-
-	if err := validatePlayersExist(ctx, s.games, logger, playersIDs); err != nil {
-		return nil, err
-	}
-	if err := validateActiveGameConflict(ctx, s.games, logger, playersIDs); err != nil {
-		return nil, err
-	}
-
-	teamAPlayers, err := loadPlayers(ctx, s.players, req.TeamA)
-	if err != nil {
-		return nil, err
-	}
-	teamBPlayers, err := loadPlayers(ctx, s.players, req.TeamB)
+	players, err := loadPlayers(ctx, s.players, playerIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +56,7 @@ func (s *MatchPlayService) CreateGame(ctx context.Context, gameType domainGame.G
 	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
 
 	// 5. Create domain game
-	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.GameType(gameType), domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(gameID, course, []*player.Player{players[0]}, []*player.Player{players[1]}, domainGame.GameTypeMatchPlay, domainGame.Variant(req.Variant))
 	if err != nil {
 		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}

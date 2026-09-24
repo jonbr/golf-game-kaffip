@@ -50,7 +50,22 @@ DELETE {{baseUrl}}/players/1
 
 
 ### ---------------------------------------
-### Create Game match_play | team_points
+### Create Game match_play
+### variant: "gross" (handicap surplus at start, no per-hole strokes)
+###       or "net" (full per-hole handicap strokes, except birdies/eagles)
+### ---------------------------------------
+POST {{baseUrl}}/games/match_play
+Content-Type: application/json
+
+{
+  "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+  "variant": "gross",
+  "player_a": 3,
+  "player_b": 4
+}
+
+### ---------------------------------------
+### Create Game team_points
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
@@ -59,9 +74,9 @@ Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+  "variant": "gross",
   "team_a": [1,3],
-  "team_b": [2,4],
-  "variant": "gross"
+  "team_b": [2,4]
 }
 
 ### ---------------------------------------
@@ -69,7 +84,7 @@ Content-Type: application/json
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
-POST {{baseUrl}}/games/wolf
+POST {{baseUrl}}/games/wolf_play
 Content-Type: application/json
 
 {

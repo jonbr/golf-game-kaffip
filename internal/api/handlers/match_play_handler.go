@@ -6,7 +6,6 @@ import (
 	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
-	domainGame "golf-game-kaffip/internal/domain/game"
 	"net/http"
 )
 
@@ -22,14 +21,14 @@ func (h *Handler) CreateMatchPlay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Execute service
-	game, err := h.MatchPlayService.CreateGame(ctx, domainGame.GameTypeMatchPlay, req)
+	game, err := h.MatchPlayService.CreateGame(ctx, req)
 	if err != nil {
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
-			logger.Info("create game failed: course not found", "course_id", req.CourseID)
+			logger.Info("create game match_play failed: course not found", "course_id", req.CourseID)
 			api.WriteNotFound(w, "course_not_found", "course does not exist", nil)
 			return
 		}
-		logger.Error("create game failed", "path", r.URL.Path, "error", err)
+		logger.Error("create game match_play failed", "path", r.URL.Path, "error", err)
 		api.WriteError(w, err)
 		return
 	}
