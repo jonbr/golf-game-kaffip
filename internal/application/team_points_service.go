@@ -10,7 +10,6 @@ import (
 	"golf-game-kaffip/internal/domain/teampoints"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
 	"golf-game-kaffip/internal/logging"
-	"time"
 )
 
 type TeamPointsService struct {
@@ -31,10 +30,10 @@ func NewTeamPointsService(
 	}
 }
 
-func (s *TeamPointsService) CreateGame(ctx context.Context, gameType domainGame.GameType, req dto.CreateTeamPointsRequest) (*domainGame.Game, error) {
+func (s *TeamPointsService) CreateGame(ctx context.Context, req dto.CreateTeamPointsRequest) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 
-	if err := validateTeamSize(gameType, req.TeamA, req.TeamB); err != nil {
+	if err := validateTeamSize(domainGame.GameTypeTeamPoints, req.TeamA, req.TeamB); err != nil {
 		return nil, err
 	}
 
@@ -61,10 +60,8 @@ func (s *TeamPointsService) CreateGame(ctx context.Context, gameType domainGame.
 		return nil, err
 	}
 
-	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
-
 	// 5. Create domain game
-	g, err := domainGame.NewGame(gameID, course, teamAPlayers, teamBPlayers, domainGame.GameType(gameType), domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(newEntityID("game"), course, teamAPlayers, teamBPlayers, domainGame.GameTypeTeamPoints, domainGame.Variant(req.Variant))
 	if err != nil {
 		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}

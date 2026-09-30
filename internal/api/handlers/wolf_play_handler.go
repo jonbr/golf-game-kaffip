@@ -24,7 +24,7 @@ func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game, err := h.WolfGameService.CreateGame(ctx, domainGame.GameTypeWolf, req)
+	game, err := h.WolfGameService.CreateGame(ctx, req)
 	if err != nil {
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
 			logger.Info("create wolf game failed: course not found", "course_id", req.CourseID)
@@ -111,7 +111,7 @@ func mapWolfPlayersToRoles(players [4]*player.Player) []dto.PlayerRoleResponse {
 // Wolf — all derived fresh from HoleResults, never stored, so they can
 // never drift out of sync with corrections.
 func mapWolfGameToResponse(g *domainWolf.Game) dto.WolfGameResponse {
-	standings := computeWolfStandings(g)
+	standings := g.Standings()
 	currentWolfID := domainWolf.WolfForHole(g.Players, g.CurrentHole, standingsThroughHole(g, g.CurrentHole-1))
 
 	standingsResp := make([]dto.WolfStandingResponse, 0, 4)
@@ -154,22 +154,6 @@ func mapWolfGameToResponse(g *domainWolf.Game) dto.WolfGameResponse {
 		HoleResults:         holeResultsResp,
 		FinishedAt:          g.FinishedAt,
 	}
-}
-
-// computeWolfStandings sums PointsAwarded across every recorded hole.
-// Never stored — always recomputed, so corrections to any hole
-// automatically ripple through correctly.
-func computeWolfStandings(g *domainWolf.Game) map[int64]int {
-	standings := make(map[int64]int, 4)
-	for _, p := range g.Players {
-		standings[p.ID] = 0
-	}
-	for _, hr := range g.HoleResults {
-		for playerID, points := range hr.PointsAwarded {
-			standings[playerID] += points
-		}
-	}
-	return standings
 }
 
 // standingsThroughHole computes standings using only holes up to and

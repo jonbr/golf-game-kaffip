@@ -10,6 +10,7 @@ type MatchOutcome struct {
 	Display    string
 }
 
+// TODO: Rewrite func. comment.
 // Outcome computes this game's outcome for event-aggregation purposes.
 // A match only counts toward an event's score once it's been finished
 // (FinishedAt set, via the existing FinishGame endpoint) — whoever is

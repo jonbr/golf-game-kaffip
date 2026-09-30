@@ -23,7 +23,7 @@ func (h *Handler) CreateTeamPoints(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Execute service
-	game, err := h.TeamPointsService.CreateGame(ctx, domainGame.GameTypeTeamPoints, req)
+	game, err := h.TeamPointsService.CreateGame(ctx, req)
 	if err != nil {
 		if errors.Is(err, domainCourse.ErrCourseNotFound) {
 			logger.Info("create game failed: course not found", "course_id", req.CourseID)

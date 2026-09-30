@@ -10,7 +10,6 @@ import (
 	"golf-game-kaffip/internal/domain/player"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
 	"golf-game-kaffip/internal/logging"
-	"time"
 )
 
 type MatchPlayService struct {
@@ -53,10 +52,8 @@ func (s *MatchPlayService) CreateGame(ctx context.Context, req dto.CreateMatchPl
 		return nil, err
 	}
 
-	gameID := fmt.Sprintf("game_%d", time.Now().UnixNano())
-
 	// 5. Create domain game
-	g, err := domainGame.NewGame(gameID, course, []*player.Player{players[0]}, []*player.Player{players[1]}, domainGame.GameTypeMatchPlay, domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(newEntityID("game"), course, []*player.Player{players[0]}, []*player.Player{players[1]}, domainGame.GameTypeMatchPlay, domainGame.Variant(req.Variant))
 	if err != nil {
 		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}

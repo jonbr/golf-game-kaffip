@@ -82,9 +82,9 @@ func (h *Handler) Router() http.Handler {
 	r.Post("/games/{id}/finish", h.FinishGame)
 
 	// Events
-	r.Post("/events", h.CreateEvent)
+	/*r.Post("/events", h.CreateEvent)
 	r.Get("/events/{id}", h.GetEvent)
-	r.Post("/events/{id}/finish", h.FinishEvent)
+	r.Post("/events/{id}/finish", h.FinishEvent)*/
 
 	// Courses External API
 	r.Get("/courses/search", h.SearchCourses)

@@ -8,6 +8,7 @@ import (
 	"golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"log/slog"
+	"time"
 )
 
 // validatePlayersExist confirms every given player ID exists, using the
@@ -70,4 +71,8 @@ func loadPlayers(ctx context.Context, players player.Repository, ids []int64) ([
 		result = append(result, p)
 	}
 	return result, nil
+}
+
+func newEntityID(prefix string) string {
+	return fmt.Sprintf("%s_%d", prefix, time.Now().UnixNano())
 }
