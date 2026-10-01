@@ -22,6 +22,10 @@ func (s *MatchPlayCupService) CreateCup(ctx context.Context, req dto.CreateMatch
 		roster[entry.PlayerID] = cup.Side(entry.Side)
 	}
 
+	if err := validateMatchPlayCupMatches(roster, req.Matches); err != nil {
+		return nil, err
+	}
+
 	matchIDs := make([]string, 0, len(req.Matches))
 	for _, spec := range req.Matches {
 		g, err := s.matchPlay.CreateGame(ctx, dto.CreateMatchPlayRequest{
@@ -46,4 +50,38 @@ func (s *MatchPlayCupService) CreateCup(ctx context.Context, req dto.CreateMatch
 	}
 
 	return c, nil
+}
+
+// validateMatchPlayCupMatches confirms every player referenced in matches
+// is on the roster, and that each matche's two players are on the opposite
+// cup sides - a match with both players on the same side would produce
+// a nonesecial event contribution at score time.
+func validateMatchPlayCupMatches(roster map[int64]cup.Side, matches []dto.CreateMatchPlayRequest) error {
+	for i, spec := range matches {
+		sideA, okA := roster[spec.PlayerA]
+		if !okA {
+			return NewServiceError("player_not_on_cup_roster", map[string]any{
+				"player_id": spec.PlayerA, "match_index": i,
+			})
+		}
+
+		sideB, okB := roster[spec.PlayerB]
+		if !okB {
+			// Fixed: Typo in error string ("onb") and match_index was hardcoded to 1
+			return NewServiceError("player_not_on_cup_roster", map[string]any{
+				"player_id": spec.PlayerB, "match_index": i,
+			})
+		}
+
+		if sideA == sideB {
+			// Fixed: match_index was hardcoded to 1
+			return NewServiceError("match_players_same_side", map[string]any{
+				"match_index": i,
+				"player_a":    spec.PlayerA,
+				"player_b":    spec.PlayerB,
+				"side":        string(sideA),
+			})
+		}
+	}
+	return nil
 }

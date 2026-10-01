@@ -7,12 +7,14 @@ import (
 	"golf-game-kaffip/internal/api/handlers"
 	"golf-game-kaffip/internal/application"
 	"golf-game-kaffip/internal/config"
+	"golf-game-kaffip/internal/domain/cup"
 	"golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"golf-game-kaffip/internal/domain/wolf"
 	"golf-game-kaffip/internal/infrastructure/external/opengolfapi"
 	"log/slog"
 
+	cupdb "golf-game-kaffip/internal/infrastructure/postgres/cup"
 	gamedb "golf-game-kaffip/internal/infrastructure/postgres/game"
 	playerdb "golf-game-kaffip/internal/infrastructure/postgres/player"
 	wolfdb "golf-game-kaffip/internal/infrastructure/postgres/wolf"
@@ -75,11 +77,18 @@ func Initialize() (*App, error) {
 		playerRepo   player.Repository = playerdb.NewRepository(db)
 		gameRepo     game.Repository   = gamedb.NewRepository(db, playerRepo)
 		wolfGameRepo wolf.Repository   = wolfdb.NewRepository(db, playerRepo)
+		cupRepo      cup.Repository    = cupdb.NewRepository(db)
 	)
 
 	// -----------------------------
 	// 3. Create application services
 	// -----------------------------
+	cupService := application.NewCupService(
+		cupRepo,
+		gameRepo,
+		wolfGameRepo,
+	)
+
 	gameService := application.NewGameService(
 		gameRepo,
 		playerRepo,
@@ -105,18 +114,24 @@ func Initialize() (*App, error) {
 		externalAPI,
 	)
 
+	matchPlayCupService := application.NewMatchPlayCupService(cupRepo, matchPlayService)
 	playerService := application.NewPlayerService(playerRepo)
-
-	teamEventRepo := gamedb.NewTeamEventRepository(db, gameRepo)
-	teamEventService := application.NewTeamEventService(teamEventRepo, playerRepo, gameRepo, externalAPI)
-
-	//h := handlers.NewHandler(gameService, playerService, teamEventService, logger, db)
 
 	// -----------------------------
 	// 4. Create HTTP handlers
 	// -----------------------------
-	h := handlers.NewHandler(gameService, matchPlayService, teamPointsService, wolfGameService, playerService, teamEventService, logger, db, cfg.CORSAllowedOrigins)
-	//h := handlers.NewHandler(gameService, playerService, logger, db, cfg.CORSAllowedOrigins)
+	h := handlers.NewHandler(
+		cupService,
+		gameService,
+		matchPlayService,
+		teamPointsService,
+		wolfGameService,
+		playerService,
+		matchPlayCupService,
+		logger,
+		db,
+		cfg.CORSAllowedOrigins,
+	)
 
 	return &App{
 		Config:      cfg,

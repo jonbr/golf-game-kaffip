@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS cup_matches;
+DROP TABLE IF EXISTS cup_players;
+DROP TABLE IF EXISTS cups;

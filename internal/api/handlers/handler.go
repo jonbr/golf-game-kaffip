@@ -14,38 +14,41 @@ import (
 )
 
 type Handler struct {
-	GameService        *application.GameService
-	MatchPlayService   *application.MatchPlayService
-	TeamPointsService  *application.TeamPointsService
-	WolfGameService    *application.WolfGameService
-	PlayerService      *application.PlayerService
-	TeamEventService   *application.TeamEventService
-	Logger             *slog.Logger
-	DB                 *pgxpool.Pool
-	CORSAllowedOrigins []string
+	CupService          *application.CupService
+	GameService         *application.GameService
+	MatchPlayService    *application.MatchPlayService
+	TeamPointsService   *application.TeamPointsService
+	WolfGameService     *application.WolfGameService
+	PlayerService       *application.PlayerService
+	MatchPlayCupService *application.MatchPlayCupService
+	Logger              *slog.Logger
+	DB                  *pgxpool.Pool
+	CORSAllowedOrigins  []string
 }
 
 func NewHandler(
+	cupService *application.CupService,
 	gameService *application.GameService,
 	matchPlayService *application.MatchPlayService,
 	teamPointsService *application.TeamPointsService,
 	wolfGameService *application.WolfGameService,
 	playerService *application.PlayerService,
-	teamEventService *application.TeamEventService,
+	matchPlayCupService *application.MatchPlayCupService,
 	logger *slog.Logger,
 	db *pgxpool.Pool,
 	corsAllowedOrigins []string,
 ) *Handler {
 	return &Handler{
-		GameService:        gameService,
-		MatchPlayService:   matchPlayService,
-		TeamPointsService:  teamPointsService,
-		WolfGameService:    wolfGameService,
-		PlayerService:      playerService,
-		TeamEventService:   teamEventService,
-		Logger:             logger,
-		DB:                 db,
-		CORSAllowedOrigins: corsAllowedOrigins,
+		CupService:          cupService,
+		GameService:         gameService,
+		MatchPlayService:    matchPlayService,
+		TeamPointsService:   teamPointsService,
+		WolfGameService:     wolfGameService,
+		PlayerService:       playerService,
+		MatchPlayCupService: matchPlayCupService,
+		Logger:              logger,
+		DB:                  db,
+		CORSAllowedOrigins:  corsAllowedOrigins,
 	}
 }
 
@@ -68,11 +71,13 @@ func (h *Handler) Router() http.Handler {
 	r.Delete("/players/{id}", h.DeletePlayer)
 
 	// Games
+	r.Post("/cups/match_play", h.CreateMatchPlayCup)
 	r.Post("/games/team_points", h.CreateTeamPoints)
 	r.Post("/games/match_play", h.CreateMatchPlay)
 	r.Post("/games/wolf_play", h.CreateWolfPlay)
 
 	r.Get("/games", h.GetGames)
+	r.Get("/cups/{id}", h.GetCup)
 	r.Get("/games/team_points/{id}", h.GetTeamPointsGame)
 	r.Get("/games/match_play/{id}", h.GetMatchPlayGame)
 	r.Get("/games/wolf/{id}", h.GetWolfPlay)
@@ -80,11 +85,6 @@ func (h *Handler) Router() http.Handler {
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 
 	r.Post("/games/{id}/finish", h.FinishGame)
-
-	// Events
-	/*r.Post("/events", h.CreateEvent)
-	r.Get("/events/{id}", h.GetEvent)
-	r.Post("/events/{id}/finish", h.FinishEvent)*/
 
 	// Courses External API
 	r.Get("/courses/search", h.SearchCourses)
@@ -102,11 +102,12 @@ func startRequest(r *http.Request, action string) (context.Context, *slog.Logger
 	return ctx, logger
 }
 
-func parseGameID(w http.ResponseWriter, r *http.Request, logger *slog.Logger) (string, bool) {
+// TODO: Make function agnostic so we can parse other Id's as well.
+func parseID(w http.ResponseWriter, r *http.Request, logger *slog.Logger, entityName string) (string, bool) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
-		logger.Error("missing game id")
-		api.WriteBadRequest(w, "missing_game_id", "game id must be set", nil)
+		logger.Error("missing " + entityName + " id")
+		api.WriteBadRequest(w, "missing_"+entityName+"_id", entityName+" id must be set", nil)
 		return "", false
 	}
 	return id, true

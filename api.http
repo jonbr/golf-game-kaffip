@@ -50,6 +50,29 @@ DELETE {{baseUrl}}/players/1
 
 
 ### ---------------------------------------
+### Create Cup match_play
+### ---------------------------------------
+POST {{baseUrl}}/cups/match_play
+Content-Type: application/json
+
+{
+    "name": "Test Cup",
+    "roster": [
+      { "player_id": 1, "side": "A" },
+      { "player_id": 2, "side": "B" }
+    ],
+    "matches": [
+      {
+        "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+        "variant": "net",
+        "player_a": 1,
+        "player_b": 2
+      }
+    ]
+  }
+
+
+### ---------------------------------------
 ### Create Game match_play
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
@@ -63,6 +86,7 @@ Content-Type: application/json
   "player_a": 3,
   "player_b": 4
 }
+
 
 ### ---------------------------------------
 ### Create Game team_points
@@ -79,6 +103,7 @@ Content-Type: application/json
   "team_b": [2,4]
 }
 
+
 ### ---------------------------------------
 ### Create Game Wolf
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
@@ -94,17 +119,23 @@ Content-Type: application/json
 
 
 ### ---------------------------------------
+### Get Cup
+### ---------------------------------------
+GET {{baseUrl}}/cups/cup_1790872947915123000
+
+
+### ---------------------------------------
 ### Get Games
 ### optional ?status=active|finished
 ### ---------------------------------------
 GET {{baseUrl}}/games?status=all
+
 
 ### ---------------------------------------
 ### Get Game team_points | match_play | wolf
 ### ---------------------------------------
 //GET {{baseUrl}}/games/team_points/game_1790180465322860000
 GET {{baseUrl}}/games/match_play/game_1790180465322860000
-//GET {{baseUrl}}/games/wolf/game_1790244731801360000
 
 
 ### ---------------------------------------
@@ -113,15 +144,13 @@ GET {{baseUrl}}/games/match_play/game_1790180465322860000
 ### advances CurrentHole by one; scoring any earlier hole is treated
 ### as a correction and does not move CurrentHole.
 ### ---------------------------------------
-PUT {{baseUrl}}/games/game_1784036476579441000/holes/2/score
+PUT {{baseUrl}}/games/game_1790872947890517000/holes/1/score
 Content-Type: application/json
 
 {
   "scores": [
-    { "player_id": 1, "gross": 5 },
-    { "player_id": 2, "gross": 4 },
-    { "player_id": 3, "gross": 5 },
-    { "player_id": 4, "gross": 4 }
+    { "player_id": 1, "gross": 4 },
+    { "player_id": 2, "gross": 5 }
   ]
 }
 
@@ -170,7 +199,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1790180465322860000/finish
+POST {{baseUrl}}/games/game_1790872947890517000/finish
 
 
 ### ---------------------------------------

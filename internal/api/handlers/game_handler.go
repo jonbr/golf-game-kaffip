@@ -41,7 +41,7 @@ func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set hole score")
 
-	gameID, ok := parseGameID(w, r, logger)
+	gameID, ok := parseID(w, r, logger, "game")
 	if !ok {
 		return
 	}
@@ -103,7 +103,7 @@ func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) FinishGame(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "finish game")
 
-	gameID, ok := parseGameID(w, r, logger)
+	gameID, ok := parseID(w, r, logger, "game")
 	if !ok {
 		return
 	}

@@ -44,7 +44,7 @@ func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get wolf game")
 
-	id, ok := parseGameID(w, r, logger)
+	id, ok := parseID(w, r, logger, "wolf")
 	if !ok {
 		return
 	}
@@ -69,7 +69,7 @@ func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SetWolfHoleScore(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "set wolf hole score")
 
-	gameID, ok := parseGameID(w, r, logger)
+	gameID, ok := parseID(w, r, logger, "wolf")
 	if !ok {
 		return
 	}

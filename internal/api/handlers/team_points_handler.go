@@ -44,7 +44,7 @@ func (h *Handler) CreateTeamPoints(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetTeamPointsGame(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get game")
 
-	id, ok := parseGameID(w, r, logger)
+	id, ok := parseID(w, r, logger, "team_point")
 	if !ok {
 		return
 	}

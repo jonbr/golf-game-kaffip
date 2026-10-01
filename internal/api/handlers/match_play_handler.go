@@ -44,7 +44,7 @@ func (h *Handler) CreateMatchPlay(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetMatchPlayGame(w http.ResponseWriter, r *http.Request) {
 	ctx, logger := startRequest(r, "get game")
 
-	id, ok := parseGameID(w, r, logger)
+	id, ok := parseID(w, r, logger, "match_play")
 	if !ok {
 		return
 	}
