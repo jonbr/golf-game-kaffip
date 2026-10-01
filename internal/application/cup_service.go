@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"golf-game-kaffip/internal/domain/cup"
 	"golf-game-kaffip/internal/domain/game"
@@ -48,6 +49,17 @@ func (s *CupService) GetCup(ctx context.Context, id string) (*CupDetail, error) 
 		Cup:   c,
 		Score: cup.ComputeScore(contributions),
 	}, nil
+}
+
+func (s *CupService) FinishCup(ctx context.Context, id string) error {
+	// check to prevent unnecessary finishing of cups that don't exist
+	if _, err := s.cups.LoadCup(ctx, id); err != nil {
+		if errors.Is(err, cup.ErrCupNotFound) {
+			return NewServiceError("cup_not_found", map[string]any{"cup_id": id})
+		}
+		return err
+	}
+	return s.cups.FinishCup(ctx, id)
 }
 
 // resolveMatch figures out whether gameID belongs to the two-sided game

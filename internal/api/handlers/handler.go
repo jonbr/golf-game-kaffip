@@ -70,20 +70,19 @@ func (h *Handler) Router() http.Handler {
 	r.Put("/players/{id}", h.UpdatePlayer)
 	r.Delete("/players/{id}", h.DeletePlayer)
 
-	// Games
+	// Cups
 	r.Post("/cups/match_play", h.CreateMatchPlayCup)
-	r.Post("/games/team_points", h.CreateTeamPoints)
-	r.Post("/games/match_play", h.CreateMatchPlay)
-	r.Post("/games/wolf_play", h.CreateWolfPlay)
-
-	r.Get("/games", h.GetGames)
 	r.Get("/cups/{id}", h.GetCup)
-	r.Get("/games/team_points/{id}", h.GetTeamPointsGame)
+
+	// Games
+	r.Get("/games", h.GetGames)
+	r.Post("/games/match_play", h.CreateMatchPlay)
+	r.Post("/games/team_points", h.CreateTeamPoints)
+	r.Post("/games/wolf_play", h.CreateWolfPlay)
 	r.Get("/games/match_play/{id}", h.GetMatchPlayGame)
+	r.Get("/games/team_points/{id}", h.GetTeamPointsGame)
 	r.Get("/games/wolf/{id}", h.GetWolfPlay)
-
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
-
 	r.Post("/games/{id}/finish", h.FinishGame)
 
 	// Courses External API

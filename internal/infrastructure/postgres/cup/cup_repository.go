@@ -99,6 +99,13 @@ func (r *CupRepository) LoadCup(ctx context.Context, id string) (*domainCup.Cup,
 	}, nil
 }
 
+func (r *CupRepository) FinishCup(ctx context.Context, id string) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE cups SET finished_at = NOW(), update_at = NOW() WHERE id = $1
+	`, id)
+	return err
+}
+
 func (r *CupRepository) loadPlayers(ctx context.Context, cupID string) (map[int64]domainCup.Side, error) {
 	rows, err := r.db.Query(ctx, `
 		SELECT player_id, side FROM cup_players WHERE cup_id = $1
@@ -138,11 +145,4 @@ func (r *CupRepository) loadMatchIDs(ctx context.Context, cupID string) ([]strin
 		ids = append(ids, gameID)
 	}
 	return ids, rows.Err()
-}
-
-func (r *CupRepository) FinishCup(ctx context.Context, id string) error {
-	_, err := r.db.Exec(ctx, `
-		UPDATE cups SET finished_at = NOW(), update_at = NOW() WHERE id = $1
-	`, id)
-	return err
 }

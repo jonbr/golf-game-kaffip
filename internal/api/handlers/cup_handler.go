@@ -47,6 +47,23 @@ func (h *Handler) GetCup(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (h *Handler) FinishCup(w http.ResponseWriter, r *http.Request) {
+	ctx, logger := startRequest(r, "finish cup")
+
+	cupID, ok := parseID(w, r, logger, "cup")
+	if !ok {
+		return
+	}
+
+	if err := h.CupService.FinishCup(ctx, cupID); err != nil {
+		logger.Error("finish cup failed", "cup_id", cupID, "error", err)
+		api.WriteError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func mapCupToResponse(c *cup.Cup, score cup.Score) dto.CupResponse {
 	roster := make([]dto.CupRosterEntry, 0, len(c.Players))
 	for playerID, side := range c.Players {
