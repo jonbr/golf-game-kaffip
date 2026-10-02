@@ -1,8 +1,8 @@
 # Golf Game Kaffip
 
 A Go API for scoring golf games between friends — head-to-head match play,
-2v2 team play, and Ryder-Cup-style team events that group several matches
-into one aggregate score.
+2v2 team points, 4-player Wolf, and Ryder-Cup-style Cups that group several
+finished matches of one format into one aggregate score.
 
 ## Features
 
@@ -10,17 +10,26 @@ into one aggregate score.
   - **Match play** — classic 1v1, hole-by-hole. Lower score wins the hole;
     ties halve it. Result reported in classic terms (`"3&2"`, `"2 up"`,
     `"All Square"`, `"Halved"`).
-  - **Team play** — 2v2, points-based, scored across three categories per
+  - **Team points** — 2v2, points-based, scored across three categories per
     hole: lowest individual score, lowest team accumulative score, and
     birdie/eagle bonuses (always gross, regardless of variant). The
     running score is a signed lead — the trailing team always shows 0.
-  - **Team events** — group several match play and/or team play games
-    (mixed formats allowed) into one Ryder-Cup-style event. Each match is
-    worth 1 point toward the event once finished (0.5/0.5 if halved). The
-    event's aggregate score is always recomputed live from each match's
-    current state — never stored, so it can't drift out of sync.
+  - **Wolf** — 4 players, a rotating "Wolf" seat each hole. The Wolf either
+    partners with one other player or goes it alone against the other
+    three; the winning side (Wolf's side vs. the field) splits the hole's
+    points, tied holes award nothing. Always net-scored today (no gross
+    option yet).
+- **Cups** — group several already-playable matches into one Ryder-Cup-style
+  event. A Cup is type-homogeneous: every match inside one Cup is the same
+  format (all Match Play, all Team Points, or all Wolf). Match Play and
+  Team Points matches are each worth 1 point toward the Cup once finished
+  (0.5/0.5 if tied); a Wolf match's point goes to whichever Cup side its
+  best individual performer belongs to, with ties broken by comparing
+  combined side totals. The Cup's aggregate score is never stored — always
+  recomputed live from each match's current state, so it can't drift out
+  of sync.
 - **Two scoring variants**, orthogonal to game type
-  - **Gross** — no per-hole handicap. Team play games start with a
+  - **Gross** — no per-hole handicap. Team Points games start with a
     one-time points surplus for the team with the higher combined handicap.
   - **Net** — full per-hole handicap stroke allocation. Birdies/eagles
     always count on gross score regardless of variant.
@@ -51,14 +60,19 @@ cmd/
   api/                 main API server entrypoint
   migrate/              standalone migration runner (no server startup)
 internal/
-  api/                  HTTP layer: handlers, middleware, DTOs, response/error helpers
-  application/          services: orchestrate domain logic + repositories
+  api/                  HTTP layer: per-format handlers, middleware, DTOs, response/error helpers
+  application/          services: orchestrate domain logic + repositories, decoupled per format
+                         (Match Play, Team Points, Wolf, and their three Cup services)
   domain/               core business logic, no framework or DB dependencies
-    game/                game/match aggregate, scoring rules, handicap math, team events
+    game/                shared Game aggregate (Match Play + Team Points) and handicap math
+      matchplay/           Match Play hole-result scoring
+      teampoints/          Team Points hole-result scoring
+    wolf/                Wolf aggregate: rotating Wolf seat, its own scoring + standings
+    cup/                 Cup aggregate: groups finished matches of one format into a score
     player/               player aggregate
     course/                 course model
   infrastructure/
-    postgres/             repository implementations
+    postgres/             repository implementations (game/, wolf/, cup/, player/)
     external/opengolfapi/ external course data client + search
   bootstrap/             app wiring, config, DB connection, migrations
   config/                 env-based configuration
@@ -131,8 +145,8 @@ go run ./cmd/migrate
 ```
 
 Migration files live in `internal/infrastructure/postgres/migrations` and
-are always additive (new numbered files), never edited once applied to any
-database with real data.
+are always additive (new numbered files, e.g. `0002_add_cups`), never
+edited once applied to any database with real data.
 
 ## Testing
 
@@ -173,7 +187,7 @@ gotestsum --format testname -- -tags=integration ./...
 | PUT    | `/players/{id}` | Update a player |
 | DELETE | `/players/{id}` | Soft-delete a player |
 
-A player can only belong to one unfinished game (or team event match) at a
+A player can only belong to one unfinished game (or Cup match) at a
 time; finishing frees them.
 
 ### Courses
@@ -182,31 +196,37 @@ time; finishing frees them.
 |--------|------|--------------|
 | GET    | `/courses/search?q=...` | Search courses by name/city/state via OpenGolfAPI |
 
-### Games (standalone match play or team play)
+### Games (standalone Match Play, Team Points, or Wolf)
 
 | Method | Path | Description |
 |--------|------|--------------|
-| POST   | `/games/team_play` | Create a 2v2 team play game |
 | POST   | `/games/match_play` | Create a 1v1 match play game |
+| POST   | `/games/team_points` | Create a 2v2 team points game |
+| POST   | `/games/wolf` | Create a 4-player Wolf game |
 | GET    | `/games?status=active\|finished` | List games (lightweight summaries) |
-| GET    | `/games/{id}` | Get full game state |
+| GET    | `/games/{id}` | Get full game state (generic; Wolf also has its own `GetWolfPlay` for full detail) |
 | PUT    | `/games/{id}/holes/{holeNumber}/score` | Submit or correct a hole's score |
 | POST   | `/games/{id}/finish` | Finish a game at its current hole |
 
-### Team events (grouped matches, Ryder Cup style)
+### Cups (grouped matches, Ryder Cup style)
 
 | Method | Path | Description |
 |--------|------|--------------|
-| POST   | `/events` | Create an event with N matches (mixed 1v1/2v2 allowed) |
-| GET    | `/events/{id}` | Full event: course, variant, aggregate score, all matches with live status |
-| POST   | `/events/{id}/finish` | Mark the whole event finished |
+| POST   | `/cups/match_play` | Create a Match Play Cup: N 1v1 matches, plus a two-sided player roster |
+| POST   | `/cups/team_points` | Create a Team Points Cup: N 2v2 matches |
+| POST   | `/cups/wolf` | Create a Wolf Cup: N standalone 4-player Wolf games |
+| GET    | `/cups/{id}` | Full Cup: roster, aggregate score, all matches |
+| POST   | `/cups/{id}/finish` | Mark the whole Cup finished |
 
-Individual matches inside an event are scored and finished using the
-**same** `/games/{id}/holes/{holeNumber}/score` and `/games/{id}/finish`
-endpoints above, by their own `game_id` — there's no event-specific
-scoring endpoint. Each match is worth 1 point toward its event once
-finished (0.5/0.5 if tied); the event's aggregate score is always derived
-fresh from current match state, never stored.
+A Cup is type-homogeneous — every match inside one Cup is the same format,
+unlike a mixed grouping. Individual matches inside a Cup are scored and
+finished using the **same** per-format `/games/{id}/holes/{holeNumber}/score`
+and `/games/{id}/finish` endpoints above, by their own `game_id` — there's
+no Cup-specific scoring endpoint. Each Match Play/Team Points match is worth
+1 point toward the Cup once finished (0.5/0.5 if tied); a Wolf match's point
+goes to whichever Cup side its best individual performer belongs to (tied
+by comparing combined side totals). The Cup's aggregate score is always
+derived fresh from current match state, never stored.
 
 ### Health
 
