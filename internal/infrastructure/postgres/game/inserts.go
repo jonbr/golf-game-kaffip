@@ -14,13 +14,12 @@ import (
 func InsertGameRow(ctx context.Context, tx pgx.Tx, params GameInsertParams) error {
 	_, err := tx.Exec(ctx, `
         INSERT INTO games (id, game_type, course_id, course_name, variant, starting_lead,
-                            current_hole, match_team_a, match_team_b, team_event_id,
-                            event_position, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+                            current_hole, match_team_a, match_team_b,
+                            created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
     `,
 		params.ID, params.GameType, params.CourseID, params.CourseName, params.Variant,
 		params.StartingLead, params.CurrentHole, params.MatchTeamA, params.MatchTeamB,
-		params.TeamEventID, params.EventPosition,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert game row (%s): %w", params.ID, err)
@@ -29,17 +28,15 @@ func InsertGameRow(ctx context.Context, tx pgx.Tx, params GameInsertParams) erro
 }
 
 type GameInsertParams struct {
-	ID            string
-	GameType      string
-	CourseID      string
-	CourseName    string
-	Variant       string // "gross" default if the game type doesn't use variant
-	StartingLead  int
-	CurrentHole   int
-	MatchTeamA    int
-	MatchTeamB    int
-	TeamEventID   *string
-	EventPosition *int
+	ID           string
+	GameType     string
+	CourseID     string
+	CourseName   string
+	Variant      string // "gross" default if the game type doesn't use variant
+	StartingLead int
+	CurrentHole  int
+	MatchTeamA   int
+	MatchTeamB   int
 }
 
 // InsertGamePlayer writes one row into the shared game_players table.
