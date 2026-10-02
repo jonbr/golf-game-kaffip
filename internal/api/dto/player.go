@@ -26,15 +26,13 @@ type UpdatePlayerRequest struct {
 	Handicap *float64 `json:"handicap"`
 }
 
-// NEW objects for Wolf game
-// PlayerRoleResponse represents one player's participation in a game,
-// unified across every game type. team is populated for two-sided
-// formats (points_play/match_play/team_event matches); seat is
-// populated for wolf's fixed rotation. Exactly one of the two is set,
-// depending on game_type.
+// PlayerRoleResponse represents one player's participation in a game.
+// Seat is populated only for Wolf's flat, rotation-ordered player list
+// (its fixed 0-3 seat order). Match Play and Team Points don't need a
+// discriminator field here at all — their responses use TeamA/TeamB
+// arrays, so which side a player is on is the array they appear in.
 type PlayerRoleResponse struct {
 	PlayerID int64   `json:"player_id"`
-	Team     *string `json:"team,omitempty"`
 	Seat     *int    `json:"seat,omitempty"`
 	Name     string  `json:"name"`
 	Email    string  `json:"email"`

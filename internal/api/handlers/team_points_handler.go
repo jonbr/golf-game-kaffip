@@ -7,6 +7,7 @@ import (
 	"golf-game-kaffip/internal/api/dto"
 	domainCourse "golf-game-kaffip/internal/domain/course"
 	domainGame "golf-game-kaffip/internal/domain/game"
+	"golf-game-kaffip/internal/domain/player"
 	"net/http"
 	"strconv"
 )
@@ -96,11 +97,20 @@ func mapTeamPointsToResponse(g *domainGame.Game) dto.TeamPointsResponse {
 		GameType:     string(g.GameType),
 		Variant:      string(g.Variant),
 		Course:       dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
-		Players:      mapTeamPlayersToRoles(g.TeamA, g.TeamB),
+		TeamA:        mapPlayerRoles(g.TeamA, "A"),
+		TeamB:        mapPlayerRoles(g.TeamB, "B"),
 		CurrentHole:  g.CurrentHole,
 		StartingLead: g.StartingLead,
 		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
 		HoleResults:  holeResultsResp,
 		FinishedAt:   g.FinishedAt,
 	}
+}
+
+func mapPlayerRoles(players []*player.Player, team string) []dto.PlayerRoleResponse {
+	roles := make([]dto.PlayerRoleResponse, len(players))
+	for i, p := range players {
+		roles[i] = dto.PlayerRoleResponse{PlayerID: p.ID, Name: p.Name, Handicap: p.Handicap}
+	}
+	return roles
 }

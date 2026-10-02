@@ -31,8 +31,8 @@ func (s *MatchPlayCupService) CreateCup(ctx context.Context, req dto.CreateMatch
 		g, err := s.matchPlay.CreateGame(ctx, dto.CreateMatchPlayRequest{
 			CourseID: spec.CourseID,
 			Variant:  spec.Variant,
-			PlayerA:  spec.PlayerA,
-			PlayerB:  spec.PlayerB,
+			TeamA:    []int64{spec.TeamA[0]},
+			TeamB:    []int64{spec.TeamB[0]},
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create match %d og %d: %w", len(matchIDs)+1, len(req.Matches), err)
@@ -58,18 +58,18 @@ func (s *MatchPlayCupService) CreateCup(ctx context.Context, req dto.CreateMatch
 // a nonesecial event contribution at score time.
 func validateMatchPlayCupMatches(roster map[int64]cup.Side, matches []dto.CreateMatchPlayRequest) error {
 	for i, spec := range matches {
-		sideA, okA := roster[spec.PlayerA]
+		sideA, okA := roster[spec.TeamA[0]]
 		if !okA {
 			return NewServiceError("player_not_on_cup_roster", map[string]any{
-				"player_id": spec.PlayerA, "match_index": i,
+				"player_id": spec.TeamA[0], "match_index": i,
 			})
 		}
 
-		sideB, okB := roster[spec.PlayerB]
+		sideB, okB := roster[spec.TeamB[0]]
 		if !okB {
 			// Fixed: Typo in error string ("onb") and match_index was hardcoded to 1
 			return NewServiceError("player_not_on_cup_roster", map[string]any{
-				"player_id": spec.PlayerB, "match_index": i,
+				"player_id": spec.TeamB[0], "match_index": i,
 			})
 		}
 
@@ -77,8 +77,8 @@ func validateMatchPlayCupMatches(roster map[int64]cup.Side, matches []dto.Create
 			// Fixed: match_index was hardcoded to 1
 			return NewServiceError("match_players_same_side", map[string]any{
 				"match_index": i,
-				"player_a":    spec.PlayerA,
-				"player_b":    spec.PlayerB,
+				"player_a":    spec.TeamA[0],
+				"player_b":    spec.TeamB[0],
 				"side":        string(sideA),
 			})
 		}

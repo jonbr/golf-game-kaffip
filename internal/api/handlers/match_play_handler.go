@@ -85,19 +85,17 @@ func mapMatchPlayToResponse(g *domainGame.Game) dto.MatchPlayResponse {
 
 	playerA := g.TeamA[0]
 	playerB := g.TeamB[0]
-	teamLabelA := "A"
-	teamLabelB := "B"
 
 	return dto.MatchPlayResponse{
 		ID:       g.ID,
 		GameType: string(g.GameType),
 		Variant:  string(g.Variant),
 		Course:   dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
-		PlayerA: dto.PlayerRoleResponse{
-			PlayerID: playerA.ID, Team: &teamLabelA, Name: playerA.Name, Email: playerA.Email, Handicap: playerA.Handicap,
+		TeamA: []dto.PlayerRoleResponse{
+			{PlayerID: playerA.ID, Name: playerA.Name, Handicap: playerA.Handicap},
 		},
-		PlayerB: dto.PlayerRoleResponse{
-			PlayerID: playerB.ID, Team: &teamLabelB, Name: playerB.Name, Email: playerB.Email, Handicap: playerB.Handicap,
+		TeamB: []dto.PlayerRoleResponse{
+			{PlayerID: playerB.ID, Name: playerB.Name, Handicap: playerB.Handicap},
 		},
 		CurrentHole: g.CurrentHole,
 		Status: dto.MatchPlayStatusResponse{

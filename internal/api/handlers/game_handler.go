@@ -5,7 +5,6 @@ import (
 	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/dto"
 	domainGame "golf-game-kaffip/internal/domain/game"
-	"golf-game-kaffip/internal/domain/player"
 
 	"log/slog"
 	"net/http"
@@ -130,24 +129,6 @@ func parseHoleNumber(w http.ResponseWriter, r *http.Request, logger *slog.Logger
 		return 0, false
 	}
 	return holeNumber, true
-}
-
-func mapTeamPlayersToRoles(teamA, teamB []*player.Player) []dto.PlayerRoleResponse {
-	teamLabelA := "A"
-	teamLabelB := "B"
-
-	roles := make([]dto.PlayerRoleResponse, 0, len(teamA)+len(teamB))
-	for _, p := range teamA {
-		roles = append(roles, dto.PlayerRoleResponse{
-			PlayerID: p.ID, Team: &teamLabelA, Name: p.Name, Email: p.Email, Handicap: p.Handicap,
-		})
-	}
-	for _, p := range teamB {
-		roles = append(roles, dto.PlayerRoleResponse{
-			PlayerID: p.ID, Team: &teamLabelB, Name: p.Name, Email: p.Email, Handicap: p.Handicap,
-		})
-	}
-	return roles
 }
 
 func mapGameSummaryToResponse(g *domainGame.GameSummary) dto.GameSummaryResponse {

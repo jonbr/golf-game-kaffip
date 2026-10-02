@@ -33,7 +33,7 @@ func NewMatchPlayService(
 func (s *MatchPlayService) CreateGame(ctx context.Context, req dto.CreateMatchPlayRequest) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 
-	playerIDs := []int64{req.PlayerA, req.PlayerB}
+	playerIDs := []int64{req.TeamA[0], req.TeamB[0]}
 
 	if err := validatePlayersExist(ctx, s.games, logger, playerIDs); err != nil {
 		return nil, err
