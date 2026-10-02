@@ -20,9 +20,3 @@ type Repository interface {
 	PlayerExists(ctx context.Context, id int64) (bool, error)
 	GetGameType(ctx context.Context, id string) (GameType, error) // new
 }
-
-type TeamEventRepository interface {
-	CreateEvent(ctx context.Context, event *TeamEvent) error
-	LoadEvent(ctx context.Context, id string) (*TeamEvent, error)
-	FinishEvent(ctx context.Context, id string) error
-}

@@ -1,18 +1,11 @@
 package game
 
-import (
-	"fmt"
-	"time"
-
-	"golf-game-kaffip/internal/domain/course"
-)
-
 // TeamEvent groups several 1v1 match play games into one Ryder-Cup-style
 // team event. Each match is an ordinary Game with GameType=GameTypeMatchPlay
 // — TeamEvent is purely an aggregation layer, it doesn't alter how an
 // individual match is scored. Its aggregate score is always derived fresh
 // from the current state of its matches, never stored, so it can't drift.
-type TeamEvent struct {
+/*type TeamEvent struct {
 	ID         string
 	Course     *course.Course
 	Variant    Variant
@@ -80,4 +73,4 @@ func NewTeamEvent(id string, c *course.Course, variant Variant, matches []*Game)
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}, nil
-}
+}*/
