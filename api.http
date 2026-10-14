@@ -15,7 +15,7 @@ Content-Type: application/json
 {
   "name": "Player-new-4",
   "email": "player4@example.com",
-  "handicap": 11.7
+  "handicap": 10.4
 }
 
 
@@ -28,7 +28,7 @@ GET {{baseUrl}}/players
 ### ---------------------------------------
 ### Get Player By ID
 ### ---------------------------------------
-GET {{baseUrl}}/players/5
+GET {{baseUrl}}/players/3
 
 
 ### ---------------------------------------
@@ -73,7 +73,7 @@ Content-Type: application/json
 
 
 ### ---------------------------------------
-### Create Game match_play
+### Create Game match_play | team_points | wolf_play
 ### variant: "gross" (handicap surplus at start, no per-hole strokes)
 ###       or "net" (full per-hole handicap strokes, except birdies/eagles)
 ### ---------------------------------------
@@ -82,9 +82,9 @@ Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
-  "variant": "gross",
-  "player_a": 3,
-  "player_b": 4
+  "variant": "net",
+  "team_a": [3],
+  "team_b": [4]
 }
 
 
@@ -114,6 +114,7 @@ Content-Type: application/json
 
 {
   "course_id": "13fae2ba-51cf-436d-93da-2faa8cecc2c9",
+  "variant": "net",
   "players": [1, 2, 3, 4]
 }
 
@@ -135,7 +136,7 @@ GET {{baseUrl}}/games?status=all
 ### Get Game team_points | match_play | wolf
 ### ---------------------------------------
 //GET {{baseUrl}}/games/team_points/game_1790180465322860000
-GET {{baseUrl}}/games/match_play/game_1790180465322860000
+GET {{baseUrl}}/games/match_play/game_1790964156050123000
 
 
 ### ---------------------------------------
@@ -199,7 +200,7 @@ Content-Type: application/json
 ### ---------------------------------------
 ### Finish Game
 ### ---------------------------------------
-POST {{baseUrl}}/games/game_1790872947890517000/finish
+POST {{baseUrl}}/games/game_1790966901560494000/finish
 
 
 ### ---------------------------------------

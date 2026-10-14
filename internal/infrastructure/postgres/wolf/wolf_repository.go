@@ -49,7 +49,7 @@ func (r *WolfRepository) CreateGame(ctx context.Context, g *domainWolf.Game) err
 
 	if err := gamedb.InsertGameRow(ctx, tx, gamedb.GameInsertParams{
 		ID:          g.ID,
-		GameType:    "wolf",
+		GameType:    "wolf_play",
 		CourseID:    g.Course.ID,
 		CourseName:  g.Course.Name,
 		Variant:     "net", // unused by wolf, column default
@@ -118,7 +118,7 @@ func (r *WolfRepository) LoadGame(ctx context.Context, id string) (*domainWolf.G
 
 	return &domainWolf.Game{
 		ID:          id,
-		GameType:    "wolf",
+		GameType:    "wolf_play",
 		Course:      c,
 		Players:     players,
 		CurrentHole: currentHole,

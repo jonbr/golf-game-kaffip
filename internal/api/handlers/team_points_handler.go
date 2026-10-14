@@ -97,8 +97,8 @@ func mapTeamPointsToResponse(g *domainGame.Game) dto.TeamPointsResponse {
 		GameType:     string(g.GameType),
 		Variant:      string(g.Variant),
 		Course:       dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
-		TeamA:        mapPlayerRoles(g.TeamA, "A"),
-		TeamB:        mapPlayerRoles(g.TeamB, "B"),
+		TeamA:        mapPlayerRoles(g.TeamA),
+		TeamB:        mapPlayerRoles(g.TeamB),
 		CurrentHole:  g.CurrentHole,
 		StartingLead: g.StartingLead,
 		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
@@ -107,7 +107,7 @@ func mapTeamPointsToResponse(g *domainGame.Game) dto.TeamPointsResponse {
 	}
 }
 
-func mapPlayerRoles(players []*player.Player, team string) []dto.PlayerRoleResponse {
+func mapPlayerRoles(players []*player.Player) []dto.PlayerRoleResponse {
 	roles := make([]dto.PlayerRoleResponse, len(players))
 	for i, p := range players {
 		roles[i] = dto.PlayerRoleResponse{PlayerID: p.ID, Name: p.Name, Handicap: p.Handicap}

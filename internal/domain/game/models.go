@@ -14,7 +14,7 @@ type Variant string
 const (
 	GameTypeTeamPoints GameType = "team_points"
 	GameTypeMatchPlay  GameType = "match_play"
-	GameTypeWolf       GameType = "wolf"
+	GameTypeWolf       GameType = "wolf_play"
 )
 
 const (

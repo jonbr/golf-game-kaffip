@@ -33,6 +33,12 @@ func NewMatchPlayService(
 func (s *MatchPlayService) CreateGame(ctx context.Context, req dto.CreateMatchPlayRequest) (*domainGame.Game, error) {
 	logger := logging.FromCtx(ctx)
 
+	if len(req.TeamA) != 1 || len(req.TeamB) != 1 {
+		return nil, NewServiceError("invalid_team_size", map[string]any{
+			"team_a_size": len(req.TeamA), "team_b_size": len(req.TeamB),
+		})
+	}
+
 	playerIDs := []int64{req.TeamA[0], req.TeamB[0]}
 
 	if err := validatePlayersExist(ctx, s.games, logger, playerIDs); err != nil {
