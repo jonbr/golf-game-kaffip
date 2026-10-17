@@ -93,17 +93,19 @@ func mapTeamPointsToResponse(g *domainGame.Game) dto.TeamPointsResponse {
 	}
 
 	return dto.TeamPointsResponse{
-		ID:           g.ID,
-		GameType:     string(g.GameType),
-		Variant:      string(g.Variant),
-		Course:       dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
+		GameHeaderResponse: dto.GameHeaderResponse{
+			ID:          g.ID,
+			GameType:    string(g.GameType),
+			Variant:     string(g.Variant),
+			Course:      dto.CourseSummaryResponse{ID: g.Course.ID, Name: g.Course.Name},
+			CurrentHole: g.CurrentHole,
+			FinishedAt:  g.FinishedAt,
+		},
 		TeamA:        mapPlayerRoles(g.TeamA),
 		TeamB:        mapPlayerRoles(g.TeamB),
-		CurrentHole:  g.CurrentHole,
 		StartingLead: g.StartingLead,
 		MatchScore:   dto.MatchScoreResponse{TeamA: g.MatchScore.TeamA, TeamB: g.MatchScore.TeamB},
 		HoleResults:  holeResultsResp,
-		FinishedAt:   g.FinishedAt,
 	}
 }
 

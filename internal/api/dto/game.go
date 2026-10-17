@@ -6,6 +6,18 @@ type CreateGameResponse struct {
 	GameID string `json:"game_id"`
 }
 
+// GameHeaderResponse holds the fields shared by the two-sided formats
+// (Match Play, Team Points, Alternate Shot). It is embedded in each
+// format's response, so the JSON stays flat.
+type GameHeaderResponse struct {
+	ID          string                `json:"id"`
+	GameType    string                `json:"game_type"`
+	Variant     string                `json:"variant"`
+	Course      CourseSummaryResponse `json:"course"`
+	CurrentHole int                   `json:"current_hole"`
+	FinishedAt  *time.Time            `json:"finished_at"`
+}
+
 type SetHoleScoreRequest struct {
 	Scores []PlayerGrossScore `json:"scores"`
 
@@ -16,8 +28,8 @@ type SetHoleScoreRequest struct {
 }
 
 type PlayerGrossScore struct {
-	PlayerID int64 `json:"player_id" binding:"required"`
-	Gross    int   `json:"gross" binding:"required"`
+	PlayerID int64 `json:"player_id"`
+	Gross    int   `json:"gross"`
 }
 
 type PlayerScoreResponse struct {

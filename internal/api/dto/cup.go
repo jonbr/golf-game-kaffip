@@ -7,27 +7,26 @@ type CupRosterEntry struct {
 	Side     string `json:"side"` // "A" or "B"
 }
 
+// CupBaseRequest holds the fields every Cup create request shares. It is
+// embedded in the per-format requests below, so the JSON payload stays flat.
+type CupBaseRequest struct {
+	Name   string           `json:"name"`
+	Roster []CupRosterEntry `json:"roster"`
+}
+
 type CreateMatchPlayCupRequest struct {
-	Name    string                   `json:"name"`
-	Roster  []CupRosterEntry         `json:"roster"`
+	CupBaseRequest
 	Matches []CreateMatchPlayRequest `json:"matches"`
 }
 
 type CreateTeamPointsCupRequest struct {
-	Name    string                    `json:"name"`
-	Roster  []CupRosterEntry          `json:"roster"`
+	CupBaseRequest
 	Matches []CreateTeamPointsRequest `json:"matches"`
 }
 
 type CreateWolfCupRequest struct {
-	Name    string                  `json:"name"`
-	Roster  []CupRosterEntry        `json:"roster"`
+	CupBaseRequest
 	Matches []CreateWolfGameRequest `json:"matches"`
-}
-
-type CreateCupRequest struct {
-	Name   string           `json:"name"`
-	Roster []CupRosterEntry `json:"roster"`
 }
 
 type CupResponse struct {

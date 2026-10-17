@@ -2,9 +2,11 @@ package dto
 
 import "time"
 
+// CreateWolfGameRequest has no variant: Wolf is always net-scored today.
+// A "variant" key in the payload is ignored by the decoder.
 type CreateWolfGameRequest struct {
 	CourseID  string  `json:"course_id"`
-	PlayerIDs []int64 `json:"players"`
+	PlayerIDs []int64 `json:"players"` // exactly 4, in rotation order
 }
 
 type SetWolfHoleScoreRequest struct {
@@ -16,8 +18,9 @@ type SetWolfHoleScoreRequest struct {
 
 type WolfGameResponse struct {
 	ID                  string                            `json:"id"`
+	GameType            string                            `json:"game_type"`
 	Course              CourseSummaryResponse             `json:"course"`
-	Players             []PlayerRoleResponse              `json:"players"` // was []PlayerSummaryResponse
+	Players             []PlayerRoleResponse              `json:"players"`
 	CurrentHole         int                               `json:"current_hole"`
 	CurrentWolfPlayerID int64                             `json:"current_wolf_player_id"`
 	Standings           []WolfStandingResponse            `json:"standings"`

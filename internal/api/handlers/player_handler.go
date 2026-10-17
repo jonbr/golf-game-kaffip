@@ -53,7 +53,7 @@ func (h *Handler) GetPlayers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. Build response DTO slice
-	resp := make([]dto.GetPlayerResponse, len(players))
+	resp := make([]dto.PlayerResponse, len(players))
 	for i, p := range players {
 		resp[i] = toPlayerResponse(p)
 	}
@@ -147,8 +147,8 @@ func parseIDParam(w http.ResponseWriter, r *http.Request, param string) (id int6
 	return id, true
 }
 
-func toPlayerResponse(p *playerDomain.Player) dto.GetPlayerResponse {
-	return dto.GetPlayerResponse{
+func toPlayerResponse(p *playerDomain.Player) dto.PlayerResponse {
+	return dto.PlayerResponse{
 		ID:       p.ID,
 		Name:     p.Name,
 		Email:    p.Email,

@@ -1,25 +1,18 @@
 package dto
 
-import "time"
-
 type CreateMatchPlayRequest struct {
 	CourseID string  `json:"course_id"`
-	Variant  string  `json:"variant"`
+	Variant  string  `json:"variant"` // "gross" or "net"
 	TeamA    []int64 `json:"team_a"`
 	TeamB    []int64 `json:"team_b"`
 }
 
 type MatchPlayResponse struct {
-	ID          string                        `json:"id"`
-	GameType    string                        `json:"game_type"`
-	Variant     string                        `json:"variant"`
-	Course      CourseSummaryResponse         `json:"course"`
+	GameHeaderResponse
 	TeamA       []PlayerRoleResponse          `json:"team_a"`
 	TeamB       []PlayerRoleResponse          `json:"team_b"`
-	CurrentHole int                           `json:"current_hole"`
 	Status      MatchPlayStatusResponse       `json:"status"`
 	HoleResults map[string]HoleResultResponse `json:"hole_results"`
-	FinishedAt  *time.Time                    `json:"finished_at"`
 }
 
 type MatchPlayStatusResponse struct {
