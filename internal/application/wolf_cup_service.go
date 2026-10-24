@@ -35,7 +35,7 @@ func (s *WolfCupService) CreateCup(ctx context.Context, req dto.CreateWolfCupReq
 		matchIDs = append(matchIDs, wg.ID)
 	}
 
-	c, err := cup.NewCup(newEntityID("cup"), req.Name, roster, matchIDs)
+	c, err := cup.NewCup(NewEntityID("cup"), req.Name, roster, matchIDs)
 	if err != nil {
 		return nil, NewServiceError("invalid_cup", map[string]any{"underlying": err.Error()})
 	}

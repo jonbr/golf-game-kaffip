@@ -128,6 +128,7 @@ func Initialize() (*App, error) {
 		wolfGameService,
 		playerService,
 		matchPlayCupService,
+		nil,
 		logger,
 		db,
 		cfg.CORSAllowedOrigins,

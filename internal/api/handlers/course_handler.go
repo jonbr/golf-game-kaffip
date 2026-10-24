@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) SearchCourses(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "search courses")
+	ctx, logger := api.StartRequest(r, "search courses")
 
 	query := r.URL.Query().Get("q")
 	if len(query) < 3 {

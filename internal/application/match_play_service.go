@@ -41,25 +41,25 @@ func (s *MatchPlayService) CreateGame(ctx context.Context, req dto.CreateMatchPl
 
 	playerIDs := []int64{req.TeamA[0], req.TeamB[0]}
 
-	if err := validatePlayersExist(ctx, s.games, logger, playerIDs); err != nil {
+	if err := ValidatePlayersExist(ctx, s.games, logger, playerIDs); err != nil {
 		return nil, err
 	}
-	if err := validateActiveGameConflict(ctx, s.games, logger, playerIDs); err != nil {
+	if err := ValidateActiveGameConflict(ctx, s.games, logger, playerIDs); err != nil {
 		return nil, err
 	}
 
-	players, err := loadPlayers(ctx, s.players, playerIDs)
+	players, err := LoadPlayers(ctx, s.players, playerIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	course, err := fetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
+	course, err := FetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. Create domain game
-	g, err := domainGame.NewGame(newEntityID("game"), course, []*player.Player{players[0]}, []*player.Player{players[1]}, domainGame.GameTypeMatchPlay, domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(NewEntityID("game"), course, []*player.Player{players[0]}, []*player.Player{players[1]}, domainGame.GameTypeMatchPlay, domainGame.Variant(req.Variant))
 	if err != nil {
 		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}

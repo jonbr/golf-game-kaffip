@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handler) CreateMatchPlayCup(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create match play cup")
+	ctx, logger := api.StartRequest(r, "create match play cup")
 
 	var req dto.CreateMatchPlayCupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -29,9 +29,9 @@ func (h *Handler) CreateMatchPlayCup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetCup(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get cup")
+	ctx, logger := api.StartRequest(r, "get cup")
 
-	cupID, ok := parseID(w, r, logger, "cup")
+	cupID, ok := api.ParseID(w, r, logger, "cup")
 	if !ok {
 		return
 	}
@@ -48,9 +48,9 @@ func (h *Handler) GetCup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) FinishCup(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "finish cup")
+	ctx, logger := api.StartRequest(r, "finish cup")
 
-	cupID, ok := parseID(w, r, logger, "cup")
+	cupID, ok := api.ParseID(w, r, logger, "cup")
 	if !ok {
 		return
 	}

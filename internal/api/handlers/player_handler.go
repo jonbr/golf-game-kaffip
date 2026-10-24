@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create player")
+	ctx, logger := api.StartRequest(r, "create player")
 
 	// 1. Bind JSON
 	var req dto.CreatePlayerRequest
@@ -42,7 +42,7 @@ func (h *Handler) CreatePlayer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetPlayers(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get players")
+	ctx, logger := api.StartRequest(r, "get players")
 
 	// 1. Execute service
 	players, err := h.PlayerService.GetPlayers(ctx)
@@ -63,7 +63,7 @@ func (h *Handler) GetPlayers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetPlayer(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get player")
+	ctx, logger := api.StartRequest(r, "get player")
 
 	// 1. Parse and validate URL parameter
 	id, ok := parseIDParam(w, r, "id")

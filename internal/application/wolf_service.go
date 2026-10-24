@@ -40,14 +40,14 @@ func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGame
 		return nil, NewServiceError("invalid_wolf_players", map[string]any{"expected": 4, "got": len(req.PlayerIDs)})
 	}
 
-	if err := validatePlayersExist(ctx, s.games, logger, req.PlayerIDs); err != nil {
+	if err := ValidatePlayersExist(ctx, s.games, logger, req.PlayerIDs); err != nil {
 		return nil, err
 	}
-	if err := validateActiveGameConflict(ctx, s.games, logger, req.PlayerIDs); err != nil {
+	if err := ValidateActiveGameConflict(ctx, s.games, logger, req.PlayerIDs); err != nil {
 		return nil, err
 	}
 
-	resolvedPlayers, err := loadPlayers(ctx, s.players, req.PlayerIDs)
+	resolvedPlayers, err := LoadPlayers(ctx, s.players, req.PlayerIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +55,12 @@ func (s *WolfGameService) CreateGame(ctx context.Context, req dto.CreateWolfGame
 	var players [4]*player.Player
 	copy(players[:], resolvedPlayers)
 
-	course, err := fetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
+	course, err := FetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
 	if err != nil {
 		return nil, err
 	}
 
-	g, err := wolf.NewGame(newEntityID("game"), course, players)
+	g, err := wolf.NewGame(NewEntityID("game"), course, players)
 	if err != nil {
 		return nil, NewServiceError("invalid_wolf_game", map[string]any{"underlying": err.Error()})
 	}

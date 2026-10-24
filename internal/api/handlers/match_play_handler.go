@@ -12,7 +12,7 @@ import (
 )
 
 func (h *Handler) CreateMatchPlay(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create match play game")
+	ctx, logger := api.StartRequest(r, "create match play game")
 
 	// 1. Bind JSON
 	var req dto.CreateMatchPlayRequest
@@ -42,9 +42,9 @@ func (h *Handler) CreateMatchPlay(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetMatchPlayGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get game")
+	ctx, logger := api.StartRequest(r, "get game")
 
-	id, ok := parseID(w, r, logger, "match_play")
+	id, ok := api.ParseID(w, r, logger, "match_play")
 	if !ok {
 		return
 	}

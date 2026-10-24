@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get games")
+	ctx, logger := api.StartRequest(r, "get games")
 
 	status := r.URL.Query().Get("status") // "active", "finished", "all", ""
 	logger.Debug("get games", "status", status)
@@ -38,9 +38,9 @@ func (h *Handler) GetGames(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "set hole score")
+	ctx, logger := api.StartRequest(r, "set hole score")
 
-	gameID, ok := parseID(w, r, logger, "game")
+	gameID, ok := api.ParseID(w, r, logger, "game")
 	if !ok {
 		return
 	}
@@ -100,9 +100,9 @@ func (h *Handler) SetHoleScore(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) FinishGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "finish game")
+	ctx, logger := api.StartRequest(r, "finish game")
 
-	gameID, ok := parseID(w, r, logger, "game")
+	gameID, ok := api.ParseID(w, r, logger, "game")
 	if !ok {
 		return
 	}

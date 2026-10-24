@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"context"
-	"golf-game-kaffip/internal/api"
 	"golf-game-kaffip/internal/api/middleware"
 	"golf-game-kaffip/internal/application"
-	"golf-game-kaffip/internal/logging"
+	"golf-game-kaffip/internal/games"
 	"log/slog"
 	"net/http"
 
@@ -21,6 +19,7 @@ type Handler struct {
 	WolfGameService     *application.WolfGameService
 	PlayerService       *application.PlayerService
 	MatchPlayCupService *application.MatchPlayCupService
+	Games               []games.Module
 	Logger              *slog.Logger
 	DB                  *pgxpool.Pool
 	CORSAllowedOrigins  []string
@@ -34,6 +33,7 @@ func NewHandler(
 	wolfGameService *application.WolfGameService,
 	playerService *application.PlayerService,
 	matchPlayCupService *application.MatchPlayCupService,
+	gameModules []games.Module,
 	logger *slog.Logger,
 	db *pgxpool.Pool,
 	corsAllowedOrigins []string,
@@ -46,6 +46,7 @@ func NewHandler(
 		WolfGameService:     wolfGameService,
 		PlayerService:       playerService,
 		MatchPlayCupService: matchPlayCupService,
+		Games:               gameModules,
 		Logger:              logger,
 		DB:                  db,
 		CORSAllowedOrigins:  corsAllowedOrigins,
@@ -74,17 +75,26 @@ func (h *Handler) Router() http.Handler {
 	r.Post("/cups/match_play", h.CreateMatchPlayCup)
 	r.Get("/cups/{id}", h.GetCup)
 
-	// Games
+	// Games (shared across formats)
+	r.Get("/games", h.GetGames)
+	r.Post("/games/{id}/finish", h.FinishGame)
+
+	// Games not yet migrated to their own module
 	r.Get("/games", h.GetGames)
 	r.Post("/games/match_play", h.CreateMatchPlay)
 	r.Post("/games/team_points", h.CreateTeamPoints)
 	r.Post("/games/wolf_play", h.CreateWolfPlay)
-	r.Post("/games/alternate_shot", h.CreateAlternateShot)
+	//r.Post("/games/alternate_shot", h.CreateAlternateShot)
 	r.Get("/games/match_play/{id}", h.GetMatchPlayGame)
 	r.Get("/games/team_points/{id}", h.GetTeamPointsGame)
 	r.Get("/games/wolf/{id}", h.GetWolfPlay)
 	r.Put("/games/{id}/holes/{holeNumber}/score", h.SetHoleScore)
 	r.Post("/games/{id}/finish", h.FinishGame)
+
+	// Games migrated to modules (one module per format: create))
+	for _, m := range h.Games {
+		m.RegisterRoutes(r)
+	}
 
 	// Courses External API
 	r.Get("/courses/search", h.SearchCourses)
@@ -93,22 +103,4 @@ func (h *Handler) Router() http.Handler {
 	PrintRoutes(r)
 
 	return r
-}
-
-func startRequest(r *http.Request, action string) (context.Context, *slog.Logger) {
-	ctx := r.Context()
-	logger := logging.FromCtx(ctx)
-	logger.Info(action)
-	return ctx, logger
-}
-
-// TODO: Make function agnostic so we can parse other Id's as well.
-func parseID(w http.ResponseWriter, r *http.Request, logger *slog.Logger, entityName string) (string, bool) {
-	id := chi.URLParam(r, "id")
-	if id == "" {
-		logger.Error("missing " + entityName + " id")
-		api.WriteBadRequest(w, "missing_"+entityName+"_id", entityName+" id must be set", nil)
-		return "", false
-	}
-	return id, true
 }

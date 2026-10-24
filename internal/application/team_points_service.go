@@ -39,29 +39,29 @@ func (s *TeamPointsService) CreateGame(ctx context.Context, req dto.CreateTeamPo
 
 	playersIDs := append(req.TeamA, req.TeamB...)
 
-	if err := validatePlayersExist(ctx, s.games, logger, playersIDs); err != nil {
+	if err := ValidatePlayersExist(ctx, s.games, logger, playersIDs); err != nil {
 		return nil, err
 	}
-	if err := validateActiveGameConflict(ctx, s.games, logger, playersIDs); err != nil {
-		return nil, err
-	}
-
-	teamAPlayers, err := loadPlayers(ctx, s.players, req.TeamA)
-	if err != nil {
-		return nil, err
-	}
-	teamBPlayers, err := loadPlayers(ctx, s.players, req.TeamB)
-	if err != nil {
+	if err := ValidateActiveGameConflict(ctx, s.games, logger, playersIDs); err != nil {
 		return nil, err
 	}
 
-	course, err := fetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
+	teamAPlayers, err := LoadPlayers(ctx, s.players, req.TeamA)
+	if err != nil {
+		return nil, err
+	}
+	teamBPlayers, err := LoadPlayers(ctx, s.players, req.TeamB)
+	if err != nil {
+		return nil, err
+	}
+
+	course, err := FetchCourse(ctx, s.externalCourseService, logger, req.CourseID)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. Create domain game
-	g, err := domainGame.NewGame(newEntityID("game"), course, teamAPlayers, teamBPlayers, domainGame.GameTypeTeamPoints, domainGame.Variant(req.Variant))
+	g, err := domainGame.NewGame(NewEntityID("game"), course, teamAPlayers, teamBPlayers, domainGame.GameTypeTeamPoints, domainGame.Variant(req.Variant))
 	if err != nil {
 		return nil, NewServiceError("invalid_game_params", map[string]any{"underlying": err.Error()})
 	}

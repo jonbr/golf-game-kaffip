@@ -2,6 +2,7 @@ package game
 
 import (
 	"golf-game-kaffip/internal/domain/player"
+	"golf-game-kaffip/internal/domain/scoring"
 	"testing"
 )
 
@@ -31,7 +32,7 @@ func TestStrokesReceived(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := strokesReceived(tt.handicap, tt.strokeIndex, tt.totalHoles)
+			got := scoring.StrokesReceived(tt.handicap, tt.strokeIndex, tt.totalHoles)
 			if got != tt.want {
 				t.Errorf("strokesReceived(%v, %d, %d) = %d, want %d",
 					tt.handicap, tt.strokeIndex, tt.totalHoles, got, tt.want)

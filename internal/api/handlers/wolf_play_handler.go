@@ -15,7 +15,7 @@ import (
 )
 
 func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create wolf game")
+	ctx, logger := api.StartRequest(r, "create wolf game")
 
 	var req dto.CreateWolfGameRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -42,9 +42,9 @@ func (h *Handler) CreateWolfPlay(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get wolf game")
+	ctx, logger := api.StartRequest(r, "get wolf game")
 
-	id, ok := parseID(w, r, logger, "wolf")
+	id, ok := api.ParseID(w, r, logger, "wolf")
 	if !ok {
 		return
 	}
@@ -67,9 +67,9 @@ func (h *Handler) GetWolfPlay(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) SetWolfHoleScore(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "set wolf hole score")
+	ctx, logger := api.StartRequest(r, "set wolf hole score")
 
-	gameID, ok := parseID(w, r, logger, "wolf")
+	gameID, ok := api.ParseID(w, r, logger, "wolf")
 	if !ok {
 		return
 	}

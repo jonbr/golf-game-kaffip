@@ -5,17 +5,24 @@ import (
 	"errors"
 	"fmt"
 	domainCourse "golf-game-kaffip/internal/domain/course"
-	"golf-game-kaffip/internal/domain/game"
 	"golf-game-kaffip/internal/domain/player"
 	"log/slog"
 	"time"
 )
 
+type PlayerChecker interface {
+	PlayerExists(ctx context.Context, id int64) (bool, error)
+}
+
+type ActiveGameChecker interface {
+	PlayersInActiveGame(ctx context.Context, playerIDs []int64) (int64, error)
+}
+
 // validatePlayersExist confirms every given player ID exists, using the
 // shared game repository's PlayerExists check. Used by any service that
 // creates a game-like aggregate referencing players (GameService,
 // WolfGameService, TeamEventService).
-func validatePlayersExist(ctx context.Context, games game.Repository, logger *slog.Logger, playerIDs []int64) error {
+func ValidatePlayersExist(ctx context.Context, games PlayerChecker, logger *slog.Logger, playerIDs []int64) error {
 	for _, pid := range playerIDs {
 		exists, err := games.PlayerExists(ctx, pid)
 		if err != nil {
@@ -31,7 +38,7 @@ func validatePlayersExist(ctx context.Context, games game.Repository, logger *sl
 
 // validateActiveGameConflict confirms none of the given players are
 // currently in an unfinished game.
-func validateActiveGameConflict(ctx context.Context, games game.Repository, logger *slog.Logger, playerIDs []int64) error {
+func ValidateActiveGameConflict(ctx context.Context, games ActiveGameChecker, logger *slog.Logger, playerIDs []int64) error {
 	blockingPlayer, err := games.PlayersInActiveGame(ctx, playerIDs)
 	if err != nil {
 		return NewServiceError("internal_error", map[string]any{"underlying": err.Error()})
@@ -46,7 +53,7 @@ func validateActiveGameConflict(ctx context.Context, games game.Repository, logg
 // fetchCourse centralizes external course lookup + error mapping. Only
 // CreateGame should call this — course data is fetched once and stored
 // locally, everything else reads it back via LoadGame/ListSummaries.
-func fetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
+func FetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.Logger, courseID string) (*domainCourse.Course, error) {
 	course, err := ecs.GetExternalCourse(ctx, courseID)
 	if err != nil {
 		logger.Info("external course lookup failed", "course_id", courseID, "error", err.Error())
@@ -61,7 +68,7 @@ func fetchCourse(ctx context.Context, ecs *ExternalCourseService, logger *slog.L
 // loadPlayers fetches the full Player record for each given ID, in order.
 // Used by any service that needs actual player data (not just an
 // existence check) to construct a game-like aggregate.
-func loadPlayers(ctx context.Context, players player.Repository, ids []int64) ([]*player.Player, error) {
+func LoadPlayers(ctx context.Context, players player.Repository, ids []int64) ([]*player.Player, error) {
 	result := make([]*player.Player, 0, len(ids))
 	for _, id := range ids {
 		p, err := players.FindByID(ctx, id, false)
@@ -73,6 +80,6 @@ func loadPlayers(ctx context.Context, players player.Repository, ids []int64) ([
 	return result, nil
 }
 
-func newEntityID(prefix string) string {
+func NewEntityID(prefix string) string {
 	return fmt.Sprintf("%s_%d", prefix, time.Now().UnixNano())
 }

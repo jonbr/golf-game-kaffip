@@ -13,7 +13,7 @@ import (
 )
 
 func (h *Handler) CreateTeamPoints(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "create team points game")
+	ctx, logger := api.StartRequest(r, "create team points game")
 
 	// 1. Bind JSON
 	var req dto.CreateTeamPointsRequest
@@ -43,9 +43,9 @@ func (h *Handler) CreateTeamPoints(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetTeamPointsGame(w http.ResponseWriter, r *http.Request) {
-	ctx, logger := startRequest(r, "get game")
+	ctx, logger := api.StartRequest(r, "get game")
 
-	id, ok := parseID(w, r, logger, "team_point")
+	id, ok := api.ParseID(w, r, logger, "team_point")
 	if !ok {
 		return
 	}
